@@ -1,0 +1,289 @@
+package top.tsukino.llmdemo.feature.chat
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.aallam.openai.api.chat.ChatMessage
+import com.aallam.openai.api.core.Role
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import top.tsukino.llmdemo.api.LLMDemoApi
+import top.tsukino.llmdemo.config.LLMPreferences
+import top.tsukino.llmdemo.data.database.dto.ConversationWithMessages
+import top.tsukino.llmdemo.data.database.entity.MessageEntity
+import top.tsukino.llmdemo.data.database.entity.ModelEntity
+import top.tsukino.llmdemo.data.database.entity.ProviderEntity
+import top.tsukino.llmdemo.data.database.entity.toChatMessage
+import top.tsukino.llmdemo.data.repo.base.ConversationRepo
+import top.tsukino.llmdemo.data.repo.base.ModelRepo
+import top.tsukino.llmdemo.data.repo.base.ProviderRepo
+import top.tsukino.llmdemo.feature.common.helper.withScope
+import java.util.Date
+import javax.inject.Inject
+
+@HiltViewModel
+class ChatViewModel @Inject constructor(
+    private val conversationRepo: ConversationRepo,
+    private val providerRepo: ProviderRepo,
+    private val modelRepo: ModelRepo,
+    private val api: LLMDemoApi,
+    private val preferences: LLMPreferences,
+): ViewModel() {
+    private val _conversationState = MutableStateFlow<ConversationWithMessages?>(null)
+    val conversationState: StateFlow<ConversationWithMessages?> = _conversationState.asStateFlow()
+
+    private var job: Job? = null
+    internal fun loadConversation(id: Long) {
+        withScope {
+            job?.cancel()
+            job = viewModelScope.launch {
+                conversationRepo.getConversation(id).collect(_conversationState::emit)
+            }
+        }
+    }
+
+
+    private val _inputFlow = MutableStateFlow<InputData>(InputData.empty())
+    val inputFlow: StateFlow<InputData> = _inputFlow.asStateFlow()
+
+    internal fun updateInputData(inputData: InputData) {
+        _inputFlow.value = inputData
+    }
+
+    internal fun clearInputData() {
+        _inputFlow.value = InputData.empty()
+    }
+
+
+    private val _providerFlow = MutableStateFlow<List<ProviderEntity>>(emptyList())
+    val providerFlow: StateFlow<List<ProviderEntity>> = _providerFlow.asStateFlow()
+    
+    internal fun loadProviders() {
+        withScope {
+            viewModelScope.launch {
+                providerRepo.getProviders().collect { providers ->
+                    _providerFlow.value = providers
+                }
+            }
+        }
+    }
+
+    private val _modelListFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
+    val modelListFlow: StateFlow<List<ModelEntity>> = _modelListFlow.asStateFlow()
+
+    internal fun loadModels() {
+        withScope {
+            viewModelScope.launch {
+                modelRepo.getModels().collect { models ->
+                    _modelListFlow.value = models
+                    models.find {
+                        val selected = conversationState.value?.conversation?.selectedModel
+                            ?: 0L
+                        it.id == selected
+                    }?.let {
+                        _modelFlow.value = it
+                    }
+                }
+            }
+        }
+    }
+
+    private val _enableSummaryTitle = MutableStateFlow(false)
+    private val _taskModelName = MutableStateFlow("")
+
+    internal fun loadSummaryTitle() {
+        withScope {
+            viewModelScope.launch(Dispatchers.IO) {
+                launch(Dispatchers.IO) {
+                    preferences.enableSummaryTitle.flow.collect { enable ->
+                        _enableSummaryTitle.value = enable
+                    }
+                }
+                launch(Dispatchers.IO) {
+                    preferences.taskModelId.flow.collect { modelName ->
+                        _taskModelName.value = modelName
+                    }
+                }
+            }
+        }
+    }
+
+    private val _modelFlow = MutableStateFlow<ModelEntity?>(null)
+    val modelFlow: StateFlow<ModelEntity?> = _modelFlow.asStateFlow()
+
+    internal fun selectModel(model: ModelEntity) {
+        _modelFlow.value = model
+        viewModelScope.launch(Dispatchers.IO) {
+            _conversationState.value?.conversation?.id?.let { id ->
+                conversationRepo.updateSelectedModel(
+                    id = id,
+                    model = model.modelId
+                )
+            }
+        }
+    }
+
+
+    internal fun addUserMessage(inputData: InputData) {
+        val userMsg = MessageEntity(
+            id = 0L,
+            conversationId = _conversationState.value?.conversation?.id ?: 0L,
+            text = inputData.text,
+            timestamp = Date(),
+            isUser = true,
+        )
+
+        viewModelScope.launch(Dispatchers.IO) {
+            conversationRepo.addMessage(userMsg)
+            handleChat(userMsg)  // 将用户消息传递给handleChat
+        }
+    }
+
+    internal suspend fun handleChat(lastUserMessage: MessageEntity? = null) {
+        var replyMsg = MessageEntity(
+            id = 0L,
+            conversationId = _conversationState.value?.conversation?.id ?: 0L,
+            text = "",
+            timestamp = Date(),
+            isUser = false,
+            model = modelFlow.value?.modelId,
+        )
+
+        val systemMsg = ChatMessage(
+            role = Role.System,
+            content = "You are a helpful assistant, always answering question in a friendly and informative manner. " +
+                // "You should ALWAYS reply equations in LaTeX format and wrap it in $$ if the answer is in Markdown. " +
+                "If you don't know the answer, just say 'I don't know'. " +
+                "If the question is not clear, ask for clarification. "
+        )
+
+        val providerName = providerFlow.value.find { it -> it.id == modelFlow.value?.providerId }?.name
+
+        Log.d("handleChat", "Provider name: $providerName")
+
+        val responseFlow = providerName?.let { provider ->
+            val currentMessages = conversationState.value?.messages?.map { it.toChatMessage() }?.toMutableList() ?: mutableListOf()
+            
+            // 确保最后的用户消息被包含在内
+            if (lastUserMessage != null && !currentMessages.any { it.content == lastUserMessage.text && it.role == Role.User }) {
+                Log.d("handleChat", "Adding user message that wasn't in state yet: ${lastUserMessage.text}")
+                currentMessages.add(lastUserMessage.toChatMessage())
+            }
+            
+            Log.d("handleChat", "Messages: $currentMessages")
+            if (currentMessages.isEmpty()) {
+                throw Exception("No messages to send")
+            }
+
+            currentMessages.add(0, systemMsg)
+            api.getProvider(provider)?.sendMessage(
+                model = modelFlow.value?.modelId ?: "",
+                messages = currentMessages,
+            )
+        }
+
+        Log.d("handleChat", "Response flow: $responseFlow")
+
+        val id = conversationRepo.addMessage(replyMsg)
+        replyMsg = replyMsg.copy(id = id)
+
+        responseFlow?.collect { response ->
+            val content: MutableList<String> = mutableListOf()
+            response.choices.forEach {
+                it.delta?.content?.let {
+                    Log.d("handleChat", "Received chunk: ${it}")
+                    content.add(it)
+                }
+                it.finishReason?.value?.let {
+                    Log.d("handleChat", "Received finish reason: ${it}")
+                    replyMsg.endReason = it
+                    conversationRepo.updateMessage(replyMsg)
+
+                    handleSummaryTitle()
+                    return@collect
+                }
+            }
+            if (content.isNotEmpty()) {
+                replyMsg.text += content.joinToString("")
+                conversationRepo.updateMessage(replyMsg)
+            }
+        }
+    }
+
+    internal suspend fun handleSummaryTitle() {
+        Log.d("handleSummaryTitle", "${_taskModelName.value}, ${_enableSummaryTitle.value}")
+
+        if (_taskModelName.value.isEmpty()) return
+        if (!_enableSummaryTitle.value) return
+
+        val taskModel = modelListFlow.value.find { it.modelId == _taskModelName.value }
+        val providerName = providerFlow.value.find { it -> it.id == taskModel?.providerId }?.name
+
+        Log.d("handleSummaryTitle", "Provider name: $providerName")
+
+        providerName?.let { provider ->
+            val chatContents = conversationState.value?.messages?.takeLast(4)?.joinToString("\n\n"){ it.text }
+
+            val responseFlow = chatContents?.let { content ->
+                Log.d("handleSummaryTitle", "Chat contents: $content")
+
+                val summaryMessage = MessageEntity(
+                    id = 0L,
+                    conversationId = _conversationState.value?.conversation?.id ?: 0L,
+                    text = "Create an emoji-based title that concisely reflects the chat's main topic (max 12 words, same language as the chat). Avoid quotes or special formatting; the title must start with a relevant emoji.\n" +
+                            "\n" +
+                            "Output as JSON: { \"title\": \"Your Title\" }\n" +
+                            "\n" +
+                            "Examples:\n" +
+                            "- { \"title\": \"\uD83D\uDCC9 Stock Market Basics\" }\n" +
+                            "\n" +
+                            "Chat History:\n" +
+                            "<chat_history>\n" +
+                            "$content\n" +
+                            "</chat_history>",
+                    timestamp = Date(),
+                    isUser = true,
+                )
+
+                api.getProvider(provider)?.sendMessage(
+                    model = modelFlow.value?.modelId ?: "",
+                    messages = listOf(summaryMessage.toChatMessage()),
+                )
+            }
+
+            val title: MutableList<String> = mutableListOf()
+            responseFlow?.collect { response ->
+                response.choices.forEach {
+                    it.delta?.content?.let {
+                        Log.d("handleChat", "Received chunk: ${it}")
+                        title.add(it)
+                    }
+                    it.finishReason?.value?.let {
+                        Log.d("handleChat", "Received finish reason: ${it}")
+                        val titleResult = title.joinToString("")
+                        var title: String? = null
+                        try {
+                            title = JSONObject(titleResult).getString("title")
+                        }
+                        catch(e: Exception) {
+                            Log.e("handleSummaryTitle", "Error parsing JSON: ${e.message}")
+                        }
+                        title?.let {
+                            conversationRepo.updateConversationTitle(
+                                id = _conversationState.value?.conversation?.id ?: 0L,
+                                title = it,
+                            )
+                        }
+                        return@collect
+                    }
+                }
+            }
+        }
+    }
+}

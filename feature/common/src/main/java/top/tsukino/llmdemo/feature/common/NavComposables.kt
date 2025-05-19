@@ -1,0 +1,130 @@
+package top.tsukino.llmdemo.feature.common
+
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import top.tsukino.llmdemo.feature.common.motion.materialSharedAxisXIn
+import top.tsukino.llmdemo.feature.common.motion.materialSharedAxisXOut
+
+/**
+ * 所有动画的时长
+ */
+const val DURATION_MILLIS = 300
+
+/**
+ * 保持
+ */
+val delayRemainTransition = fadeOut(tween(10, DURATION_MILLIS))
+
+/**
+ * 从右侧滑入+淡入
+ */
+val enterTransition = materialSharedAxisXIn({ (it * 0.1).toInt() })
+
+/**
+ * 向左侧滑出+淡出
+ */
+val exitTransition = materialSharedAxisXOut({ -(it * 0.1).toInt() })
+
+/**
+ * 从左侧滑入+淡入
+ */
+val popEnterTransition = materialSharedAxisXIn({ -(it * 0.1).toInt() })
+
+/**
+ * 向右侧滑出+淡出
+ */
+val popExitTransition = materialSharedAxisXOut({ (it * 0.1).toInt() })
+
+data class NavAnimation(
+    val enterTransition: @JvmSuppressWildcards (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)?,
+    val exitTransition: @JvmSuppressWildcards (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)?,
+    val popEnterTransition: @JvmSuppressWildcards (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)?,
+    val popExitTransition: @JvmSuppressWildcards (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)?,
+) {
+    companion object {
+        val none = NavAnimation(
+            enterTransition = { EnterTransition.None },
+            exitTransition = { delayRemainTransition },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
+        )
+    }
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun NavGraphBuilder.animatedComposable(
+    route: String,
+    arguments: List<NamedNavArgument>,
+    navAnimation: NavAnimation,
+    navController: NavHostController,
+    content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit
+) {
+    composable(
+        route = route,
+        arguments = arguments,
+        enterTransition = navAnimation.enterTransition,
+        exitTransition = navAnimation.exitTransition,
+        popEnterTransition = navAnimation.popEnterTransition,
+        popExitTransition = navAnimation.popExitTransition,
+    ) {
+        val currentDest by navController.currentBackStackEntryAsState()
+
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInteropFilter {
+                    val isCurrentScreen = currentDest?.destination?.route == route
+                    !isCurrentScreen
+                }
+        ) {
+            content(it)
+        }
+    }
+}
+
+fun NavGraphBuilder.composableIndex(
+    navAnimation: NavAnimation = NavAnimation.none,
+    navController: NavHostController,
+    content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit
+) {
+    animatedComposable(
+        route = NavDestConfig.Index.route,
+        arguments = NavDestConfig.Index.arguments,
+        navAnimation = navAnimation,
+        navController = navController,
+        content = content
+    )
+}
+
+fun NavGraphBuilder.composableChat(
+    navAnimation: NavAnimation,
+    navController: NavHostController,
+    content: @Composable AnimatedVisibilityScope.(NavBackStackEntry, Long) -> Unit
+) {
+    animatedComposable(
+        route = NavDestConfig.Chat.route,
+        arguments = NavDestConfig.Chat.arguments,
+        navAnimation = navAnimation,
+        navController = navController,
+    ) {
+        val id = it.arguments?.getLong("id") ?: 0L
+        content(it, id)
+    }
+}
