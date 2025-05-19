@@ -357,39 +357,3 @@ fun SettingsScreen(
         }
     }
 }
-
-@OptIn(
-    ExperimentalMaterial3Api::class
-)
-@Composable
-fun ProviderManageSheet(
-    provider: ProviderEntity,
-    onDismiss: () -> Unit,
-    onDelete: (ProviderEntity) -> Unit,
-) {
-    val sheetState = rememberModalBottomSheetState()
-    ModalBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = onDismiss,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "管理模型提供商",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            Button(
-                onClick = {
-                    onDelete(provider)
-                    onDismiss()
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "删除模型提供商")
-            }
-        }
-    }
-}
