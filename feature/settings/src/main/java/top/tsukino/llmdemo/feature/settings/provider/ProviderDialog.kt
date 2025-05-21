@@ -1,4 +1,4 @@
-package top.tsukino.llmdemo.feature.settings
+package top.tsukino.llmdemo.feature.settings.provider
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
