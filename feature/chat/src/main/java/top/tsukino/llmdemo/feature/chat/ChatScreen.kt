@@ -3,6 +3,7 @@ package top.tsukino.llmdemo.feature.chat
 import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -16,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
@@ -39,14 +41,6 @@ fun ChatScreen(
 
     val scrollScope = rememberCoroutineScope()
     val lazyColumnState = rememberLazyListState()
-    val scrollToBottom: () -> Unit = {
-        conversationState?.let {
-            if (it.messages.isEmpty()) return@let
-            scrollScope.launch {
-                lazyColumnState.animateScrollToItem(index = it.messages.size - 1)
-            }
-        }
-    }
 
     LaunchedEffect(conversationId) {
         vm.loadProviders()
@@ -56,7 +50,7 @@ fun ChatScreen(
     }
 
     LaunchedEffect(conversationState?.messages?.size) {
-        scrollToBottom()
+        scrollToBottom(lazyColumnState, scrollScope)
     }
 
     LaunchedEffect(
@@ -105,6 +99,29 @@ fun ChatScreen(
                     conversation = it,
                     state = lazyColumnState
                 )
+            }
+        }
+    }
+}
+
+fun scrollToBottom(
+    lazyListState: LazyListState,
+    scrollScope: CoroutineScope,
+    animate: Boolean = false
+) {
+    scrollScope.launch {
+        coroutineScope {
+            with(lazyListState) {
+                if (animate)
+                    animateScrollToItem(
+                        lazyListState.layoutInfo.totalItemsCount - 1,
+                        Int.MAX_VALUE,
+                    )
+                else
+                    scrollToItem(
+                        lazyListState.layoutInfo.totalItemsCount - 1,
+                        Int.MAX_VALUE,
+                    )
             }
         }
     }

@@ -26,6 +26,7 @@ import top.tsukino.llmdemo.data.database.entity.MessageEntity
 
 @Composable
 fun MessageItem(
+    modifier: Modifier = Modifier,
     item: MessageEntity
 ) {
     val textColor = if (item.isUser) {
@@ -35,7 +36,7 @@ fun MessageItem(
     }
 
     Column(
-        modifier = Modifier.padding(
+        modifier = modifier.padding(
             vertical = 8.dp,
             horizontal = 16.dp
         ),

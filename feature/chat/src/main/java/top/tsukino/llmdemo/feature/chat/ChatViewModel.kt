@@ -1,13 +1,16 @@
 package top.tsukino.llmdemo.feature.chat
 
 import android.util.Log
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aallam.openai.api.chat.ChatCompletionChunk
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.core.Role
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -145,7 +148,9 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    private var lastUserMessage: MessageEntity? = null
     internal suspend fun handleChat(lastUserMessage: MessageEntity? = null) {
+        this.lastUserMessage = lastUserMessage
         var replyMsg = MessageEntity(
             id = 0L,
             conversationId = _conversationState.value?.conversation?.id ?: 0L,
@@ -155,64 +160,67 @@ class ChatViewModel @Inject constructor(
             model = modelFlow.value?.modelId,
         )
 
-        val systemMsg = ChatMessage(
-            role = Role.System,
-            content = "You are a helpful assistant, always answering question in a friendly and informative manner. " +
-                // "You should ALWAYS reply equations in LaTeX format and wrap it in $$ if the answer is in Markdown. " +
-                "If you don't know the answer, just say 'I don't know'. " +
-                "If the question is not clear, ask for clarification. "
-        )
-
         val providerName = providerFlow.value.find { it -> it.id == modelFlow.value?.providerId }?.name
-
         Log.d("handleChat", "Provider name: $providerName")
 
-        val responseFlow = providerName?.let { provider ->
-            val currentMessages = conversationState.value?.messages?.map { it.toChatMessage() }?.toMutableList() ?: mutableListOf()
-            
-            // 确保最后的用户消息被包含在内
-            if (lastUserMessage != null && !currentMessages.any { it.content == lastUserMessage.text && it.role == Role.User }) {
-                Log.d("handleChat", "Adding user message that wasn't in state yet: ${lastUserMessage.text}")
-                currentMessages.add(lastUserMessage.toChatMessage())
-            }
-            
-            Log.d("handleChat", "Messages: $currentMessages")
-            if (currentMessages.isEmpty()) {
-                throw Exception("No messages to send")
-            }
-
-            currentMessages.add(0, systemMsg)
-            api.getProvider(provider)?.sendMessage(
-                model = modelFlow.value?.modelId ?: "",
-                messages = currentMessages,
-            )
-        }
-
+        val responseFlow = providerName?.let { sendMessage(it) }
         Log.d("handleChat", "Response flow: $responseFlow")
 
         val id = conversationRepo.addMessage(replyMsg)
         replyMsg = replyMsg.copy(id = id)
 
-        responseFlow?.collect { response ->
-            val content: MutableList<String> = mutableListOf()
-            response.choices.forEach {
-                it.delta?.content?.let {
-                    Log.d("handleChat", "Received chunk: ${it}")
-                    content.add(it)
-                }
-                it.finishReason?.value?.let {
-                    Log.d("handleChat", "Received finish reason: ${it}")
-                    replyMsg.endReason = it
-                    conversationRepo.updateMessage(replyMsg)
+        responseFlow?.collect { updateMessage(it, replyMsg) }
+    }
 
-                    handleSummaryTitle()
-                    return@collect
-                }
+    internal fun sendMessage(provider: String): Flow<ChatCompletionChunk>? {
+        val currentMessages = conversationState.value?.messages?.map { it.toChatMessage() }?.toMutableList() ?: mutableListOf()
+        val lastUserMessage = this.lastUserMessage
+
+        // 确保最后的用户消息被包含在内
+        if (lastUserMessage != null && !currentMessages.any { it.content == lastUserMessage.text && it.role == Role.User }) {
+            Log.d("handleChat", "Adding user message that wasn't in state yet: ${lastUserMessage.text}")
+            currentMessages.add(lastUserMessage.toChatMessage())
+        }
+
+        Log.d("handleChat", "Messages: $currentMessages")
+        if (currentMessages.isEmpty()) {
+            throw Exception("No messages to send")
+        }
+
+        val systemMsg = ChatMessage(
+            role = Role.System,
+            content = "You are a helpful assistant, always answering question in a friendly and informative manner. " +
+                    // "You should ALWAYS reply equations in LaTeX format and wrap it in $$ if the answer is in Markdown. " +
+                    "If you don't know the answer, just say 'I don't know'. " +
+                    "If the question is not clear, ask for clarification. "
+        )
+
+        currentMessages.add(0, systemMsg)
+        return api.getProvider(provider)?.sendMessage(
+            model = modelFlow.value?.modelId ?: "",
+            messages = currentMessages,
+        )
+    }
+
+    internal suspend fun updateMessage(response: ChatCompletionChunk, replyMsg: MessageEntity) {
+        val content: MutableList<String> = mutableListOf()
+        response.choices.forEach {
+            it.delta?.content?.let {
+                Log.d("handleChat", "Received chunk: ${it}")
+                content.add(it)
             }
-            if (content.isNotEmpty()) {
-                replyMsg.text += content.joinToString("")
+            it.finishReason?.value?.let {
+                Log.d("handleChat", "Received finish reason: ${it}")
+                replyMsg.endReason = it
                 conversationRepo.updateMessage(replyMsg)
+
+                handleSummaryTitle()
+                return
             }
+        }
+        if (content.isNotEmpty()) {
+            replyMsg.text += content.joinToString("")
+            conversationRepo.updateMessage(replyMsg)
         }
     }
 
