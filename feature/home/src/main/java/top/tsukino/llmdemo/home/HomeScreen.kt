@@ -21,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +66,8 @@ fun HomeScreen(
         }
     }
 
+    val showConversationManageSheet = remember { mutableStateOf(-1L) }
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -94,7 +98,8 @@ fun HomeScreen(
                     items(conversationsSorted.value) { item ->
                         ConversationItem(
                             mainController,
-                            item
+                            item,
+                            onShowSheet = { showConversationManageSheet.value = it },
                         )
                     }
                 }
@@ -125,6 +130,22 @@ fun HomeScreen(
                     }
                 )
             }
+        }
+    }
+
+    when {
+        showConversationManageSheet.value != -1L -> {
+            ConversationManageSheet(
+                vm = vm,
+                id = showConversationManageSheet.value,
+                onDismiss = {
+                    showConversationManageSheet.value = -1L
+                },
+                onDelete = { id ->
+                    vm.deleteConversation(id)
+                    showConversationManageSheet.value = -1L
+                }
+            )
         }
     }
 }

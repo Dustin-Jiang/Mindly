@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ class HomeViewModel @Inject constructor(
 
     private fun getAllConversations() {
         job?.cancel()
-        job = viewModelScope.launch {
+        job = viewModelScope.launch(Dispatchers.IO) {
             conversationRepo.getAllConversations().collect(_conversations::emit)
         }
     }
@@ -41,9 +42,15 @@ class HomeViewModel @Inject constructor(
     fun createConversation(
         onCreated: (Long) -> Unit = {}
     ) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val newId = conversationRepo.createConversation("新对话")
             onCreated(newId)
+        }
+    }
+
+    fun deleteConversation(id: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            conversationRepo.deleteConversation(id)
         }
     }
 }
