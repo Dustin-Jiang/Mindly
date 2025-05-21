@@ -54,7 +54,7 @@ internal fun MainApp() {
         )
 
         systemUiController.setNavigationBarColor(
-            color = Color.Transparent,
+            color = bottomNavBarColor,
         )
     }
 
