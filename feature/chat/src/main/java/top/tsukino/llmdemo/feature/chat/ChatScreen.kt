@@ -76,7 +76,9 @@ fun ChatScreen(
                 inputValue = inputValueState,
                 onInputValueUpdate = { vm.updateInputData(it) },
                 onSend = {
-                    vm.addUserMessage(inputValueState)
+                    vm.addUserMessage(inputValueState, {
+                        // scrollToBottom(lazyColumnState, scrollScope)
+                    })
                     vm.clearInputData()
                 },
                 modelList = modelListState,
@@ -112,14 +114,16 @@ fun scrollToBottom(
     scrollScope.launch {
         coroutineScope {
             with(lazyListState) {
+                val destination = lazyListState.layoutInfo.totalItemsCount - 1
+                if (destination < 0) return@coroutineScope
                 if (animate)
                     animateScrollToItem(
-                        lazyListState.layoutInfo.totalItemsCount - 1,
+                        destination,
                         Int.MAX_VALUE,
                     )
                 else
                     scrollToItem(
-                        lazyListState.layoutInfo.totalItemsCount - 1,
+                        destination,
                         Int.MAX_VALUE,
                     )
             }

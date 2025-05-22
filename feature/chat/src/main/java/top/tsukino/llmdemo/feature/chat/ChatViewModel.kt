@@ -133,7 +133,7 @@ class ChatViewModel @Inject constructor(
     }
 
 
-    internal fun addUserMessage(inputData: InputData) {
+    internal fun addUserMessage(inputData: InputData, onUpdate: () -> Unit) {
         val userMsg = MessageEntity(
             id = 0L,
             conversationId = _conversationState.value?.conversation?.id ?: 0L,
@@ -144,13 +144,11 @@ class ChatViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             conversationRepo.addMessage(userMsg)
-            handleChat(userMsg)  // 将用户消息传递给handleChat
+            handleChat(userMsg, onUpdate)  // 将用户消息传递给handleChat
         }
     }
 
-    private var lastUserMessage: MessageEntity? = null
-    internal suspend fun handleChat(lastUserMessage: MessageEntity? = null) {
-        this.lastUserMessage = lastUserMessage
+    internal suspend fun handleChat(lastUserMessage: MessageEntity, onUpdate: () -> Unit) {
         var replyMsg = MessageEntity(
             id = 0L,
             conversationId = _conversationState.value?.conversation?.id ?: 0L,
@@ -163,64 +161,32 @@ class ChatViewModel @Inject constructor(
         val providerName = providerFlow.value.find { it -> it.id == modelFlow.value?.providerId }?.name
         Log.d("handleChat", "Provider name: $providerName")
 
-        val responseFlow = providerName?.let { sendMessage(it) }
-        Log.d("handleChat", "Response flow: $responseFlow")
+        replyMsg = replyMsg.copy(id = conversationRepo.addMessage(replyMsg))
 
-        val id = conversationRepo.addMessage(replyMsg)
-        replyMsg = replyMsg.copy(id = id)
-
-        responseFlow?.collect { updateMessage(it, replyMsg) }
-    }
-
-    internal fun sendMessage(provider: String): Flow<ChatCompletionChunk>? {
-        val currentMessages = conversationState.value?.messages?.map { it.toChatMessage() }?.toMutableList() ?: mutableListOf()
-        val lastUserMessage = this.lastUserMessage
-
-        // 确保最后的用户消息被包含在内
-        if (lastUserMessage != null && !currentMessages.any { it.content == lastUserMessage.text && it.role == Role.User }) {
-            Log.d("handleChat", "Adding user message that wasn't in state yet: ${lastUserMessage.text}")
-            currentMessages.add(lastUserMessage.toChatMessage())
-        }
-
-        Log.d("handleChat", "Messages: $currentMessages")
-        if (currentMessages.isEmpty()) {
-            throw Exception("No messages to send")
-        }
-
-        val systemMsg = ChatMessage(
-            role = Role.System,
-            content = "You are a helpful assistant, always answering question in a friendly and informative manner. " +
-                    // "You should ALWAYS reply equations in LaTeX format and wrap it in $$ if the answer is in Markdown. " +
-                    "If you don't know the answer, just say 'I don't know'. " +
-                    "If the question is not clear, ask for clarification. "
-        )
-
-        currentMessages.add(0, systemMsg)
-        return api.getProvider(provider)?.sendMessage(
-            model = modelFlow.value?.modelId ?: "",
-            messages = currentMessages,
-        )
-    }
-
-    internal suspend fun updateMessage(response: ChatCompletionChunk, replyMsg: MessageEntity) {
-        val content: MutableList<String> = mutableListOf()
-        response.choices.forEach {
-            it.delta?.content?.let {
-                Log.d("handleChat", "Received chunk: ${it}")
-                content.add(it)
-            }
-            it.finishReason?.value?.let {
-                Log.d("handleChat", "Received finish reason: ${it}")
-                replyMsg.endReason = it
-                conversationRepo.updateMessage(replyMsg)
-
-                handleSummaryTitle()
-                return
+        providerName?.let {
+            api.getProvider(it)?.let { provider ->
+                provider.handleChat(
+                    model = modelFlow.value?.modelId ?: "",
+                    message = lastUserMessage.toChatMessage(),
+                    history = _conversationState.value?.messages?.map { it.toChatMessage() } ?: emptyList(),
+                    onUpdate = {
+                        replyMsg.text += it
+                        updateMessage(replyMsg)
+                        onUpdate()
+                    },
+                    onFinish = { endReason ->
+                        replyMsg.endReason = endReason
+                        updateMessage(replyMsg)
+                        handleSummaryTitle()
+                    }
+                )
             }
         }
-        if (content.isNotEmpty()) {
-            replyMsg.text += content.joinToString("")
-            conversationRepo.updateMessage(replyMsg)
+    }
+
+    internal fun updateMessage(message: MessageEntity) {
+        viewModelScope.launch(Dispatchers.IO) {
+            conversationRepo.updateMessage(message)
         }
     }
 
@@ -237,14 +203,11 @@ class ChatViewModel @Inject constructor(
 
         providerName?.let { provider ->
             val chatContents = conversationState.value?.messages?.takeLast(4)?.joinToString("\n\n"){ it.text }
-
-            val responseFlow = chatContents?.let { content ->
+            chatContents?.let { content ->
                 Log.d("handleSummaryTitle", "Chat contents: $content")
 
-                val summaryMessage = MessageEntity(
-                    id = 0L,
-                    conversationId = _conversationState.value?.conversation?.id ?: 0L,
-                    text = "Create an emoji-based title that concisely reflects the chat's main topic (max 12 words, same language as the chat). Avoid quotes or special formatting; the title must start with a relevant emoji.\n" +
+                val summaryMessage = ChatMessage(
+                    content = "Create an emoji-based title that concisely reflects the chat's main topic (max 12 words, same language as the chat). Avoid quotes or special formatting; the title must start with a relevant emoji.\n" +
                             "\n" +
                             "Output as JSON: { \"title\": \"Your Title\" }\n" +
                             "\n" +
@@ -255,25 +218,18 @@ class ChatViewModel @Inject constructor(
                             "<chat_history>\n" +
                             "$content\n" +
                             "</chat_history>",
-                    timestamp = Date(),
-                    isUser = true,
+                    role = Role.User
                 )
 
-                api.getProvider(provider)?.sendMessage(
+                val title: MutableList<String> = mutableListOf()
+                api.getProvider(provider)?.handleChat(
                     model = modelFlow.value?.modelId ?: "",
-                    messages = listOf(summaryMessage.toChatMessage()),
-                )
-            }
-
-            val title: MutableList<String> = mutableListOf()
-            responseFlow?.collect { response ->
-                response.choices.forEach {
-                    it.delta?.content?.let {
-                        Log.d("handleChat", "Received chunk: ${it}")
+                    message = summaryMessage,
+                    history = emptyList(),
+                    onUpdate = {
                         title.add(it)
-                    }
-                    it.finishReason?.value?.let {
-                        Log.d("handleChat", "Received finish reason: ${it}")
+                    },
+                    onFinish = { endReason ->
                         val titleResult = title.joinToString("")
                         var title: String? = null
                         try {
@@ -288,9 +244,9 @@ class ChatViewModel @Inject constructor(
                                 title = it,
                             )
                         }
-                        return@collect
+                        return@handleChat
                     }
-                }
+                )
             }
         }
     }
