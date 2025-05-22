@@ -56,7 +56,6 @@ fun SettingsScreen(
         }
     }
 
-
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -77,6 +76,4 @@ fun SettingsScreen(
             }
         }
     }
-
-
 }
