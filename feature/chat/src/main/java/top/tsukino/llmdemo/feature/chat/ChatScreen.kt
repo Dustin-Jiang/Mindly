@@ -50,7 +50,7 @@ fun ChatScreen(
     }
 
     LaunchedEffect(conversationState?.messages?.size) {
-        scrollToBottom(lazyColumnState, scrollScope)
+        scrollToBottom(lazyColumnState, scrollScope, true)
     }
 
     LaunchedEffect(
@@ -77,7 +77,7 @@ fun ChatScreen(
                 onInputValueUpdate = { vm.updateInputData(it) },
                 onSend = {
                     vm.addUserMessage(inputValueState, {
-                        // scrollToBottom(lazyColumnState, scrollScope)
+                        scrollToBottom(lazyColumnState, scrollScope, true)
                     })
                     vm.clearInputData()
                 },
@@ -114,18 +114,10 @@ fun scrollToBottom(
     scrollScope.launch {
         coroutineScope {
             with(lazyListState) {
-                val destination = lazyListState.layoutInfo.totalItemsCount - 1
-                if (destination < 0) return@coroutineScope
                 if (animate)
-                    animateScrollToItem(
-                        destination,
-                        Int.MAX_VALUE,
-                    )
+                    animateScrollToItem(0)
                 else
-                    scrollToItem(
-                        destination,
-                        Int.MAX_VALUE,
-                    )
+                    scrollToItem(0)
             }
         }
     }

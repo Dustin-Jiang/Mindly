@@ -25,10 +25,11 @@ internal fun MessageList(
     state: LazyListState
 ) {
     LazyColumn(
-        state = state
+        state = state,
+        reverseLayout = true
     ) {
         items(
-            conversation.messages,
+            conversation.messages.reversed(),
             key = { it.id }
         ) { item ->
             MessageContainer(
