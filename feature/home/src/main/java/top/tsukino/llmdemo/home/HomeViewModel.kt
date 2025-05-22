@@ -42,7 +42,7 @@ class HomeViewModel @Inject constructor(
     fun createConversation(
         onCreated: (Long) -> Unit = {}
     ) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Main) {
             val newId = conversationRepo.createConversation("新对话")
             onCreated(newId)
         }
