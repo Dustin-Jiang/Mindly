@@ -142,7 +142,7 @@ class ChatViewModel @Inject constructor(
             isUser = true,
         )
 
-        viewModelScope.launch(Dispatchers.IO) {
+        api.scope.launch(Dispatchers.IO) {
             conversationRepo.addMessage(userMsg)
             handleChat(userMsg, onUpdate)  // 将用户消息传递给handleChat
         }
@@ -171,22 +171,16 @@ class ChatViewModel @Inject constructor(
                     history = _conversationState.value?.messages?.map { it.toChatMessage() } ?: emptyList(),
                     onUpdate = {
                         replyMsg.text += it
-                        updateMessage(replyMsg)
+                        conversationRepo.updateMessage(replyMsg)
                         onUpdate()
                     },
                     onFinish = { endReason ->
                         replyMsg.endReason = endReason
-                        updateMessage(replyMsg)
+                        conversationRepo.updateMessage(replyMsg)
                         handleSummaryTitle()
                     }
                 )
             }
-        }
-    }
-
-    internal fun updateMessage(message: MessageEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            conversationRepo.updateMessage(message)
         }
     }
 

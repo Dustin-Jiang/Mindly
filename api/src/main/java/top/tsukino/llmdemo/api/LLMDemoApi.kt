@@ -15,7 +15,7 @@ class LLMDemoApi() {
     private val configs = mutableMapOf<String, OpenAIConfig>()
     private val providers = mutableMapOf<String, ApiProvider>()
 
-    private val scope = CoroutineScope(Dispatchers.IO)
+    val scope = CoroutineScope(Dispatchers.IO)
     private val _models: MutableStateFlow<List<Model>> = MutableStateFlow(emptyList())
     val models: StateFlow<List<Model>> = _models
 

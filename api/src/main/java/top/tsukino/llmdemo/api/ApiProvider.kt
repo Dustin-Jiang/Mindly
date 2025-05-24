@@ -82,7 +82,7 @@ class ApiProvider(
         model: String,
         message: ChatMessage,
         history: List<ChatMessage>,
-        onUpdate: (content: String) -> Unit,
+        onUpdate: suspend (content: String) -> Unit,
         onFinish: suspend (finishReason: String) -> Unit,
     ) {
         val history = history.toMutableList()
