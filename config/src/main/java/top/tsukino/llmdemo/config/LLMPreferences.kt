@@ -15,4 +15,7 @@ class LLMPreferences(context: Context) {
 
     private val TASK_MODEL_ID = stringPreferencesKey("task_model_id")
     val taskModelId = PreferencesDataStoreItem<String>(TASK_MODEL_ID, "", store)
+
+    private val DEFAULT_MODEL_ID = stringPreferencesKey("default_model_id")
+    val defaultModelId = PreferencesDataStoreItem<String>(DEFAULT_MODEL_ID, "", store)
 }

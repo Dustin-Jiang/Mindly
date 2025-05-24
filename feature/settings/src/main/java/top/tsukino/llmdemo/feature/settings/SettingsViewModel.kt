@@ -94,6 +94,8 @@ class SettingsViewModel @Inject constructor (
     val enableSummaryTitle = _enableSummaryTitle.asStateFlow()
     private val _taskModelName = MutableStateFlow<String>("")
     val taskModelName = _taskModelName.asStateFlow()
+    private val _defaultModelName = MutableStateFlow<String>("")
+    val defaultModelName = _defaultModelName.asStateFlow()
 
     private fun loadSummaryTitle() {
         withScope {
@@ -106,6 +108,11 @@ class SettingsViewModel @Inject constructor (
                 launch(Dispatchers.IO) {
                     preferences.taskModelId.flow.collect { modelName ->
                         _taskModelName.value = modelName
+                    }
+                }
+                launch(Dispatchers.IO) {
+                    preferences.defaultModelId.flow.collect { modelName ->
+                        _defaultModelName.value = modelName
                     }
                 }
             }
@@ -124,6 +131,14 @@ class SettingsViewModel @Inject constructor (
         withScope {
             viewModelScope.launch(Dispatchers.IO) {
                 preferences.taskModelId.set(modelId)
+            }
+        }
+    }
+
+    internal fun updateDefaultModelId(modelId: String) {
+        withScope {
+            viewModelScope.launch(Dispatchers.IO) {
+                preferences.defaultModelId.set(modelId)
             }
         }
     }

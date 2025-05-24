@@ -41,6 +41,17 @@ class ChatViewModel @Inject constructor(
     private val _conversationState = MutableStateFlow<ConversationWithMessages?>(null)
     val conversationState: StateFlow<ConversationWithMessages?> = _conversationState.asStateFlow()
 
+    internal fun load(conversationId: Long) {
+        loadProviders()
+        loadConversation(conversationId)
+        loadSummaryTitle()
+        withScope {
+            viewModelScope.launch(Dispatchers.IO) {
+                loadDefaultModel()
+            }
+        }
+    }
+
     private var job: Job? = null
     internal fun loadConversation(id: Long) {
         withScope {
@@ -80,20 +91,18 @@ class ChatViewModel @Inject constructor(
     private val _modelListFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
     val modelListFlow: StateFlow<List<ModelEntity>> = _modelListFlow.asStateFlow()
 
-    internal fun loadModels() {
-        withScope {
-            viewModelScope.launch {
-                modelRepo.getModels().collect { models ->
-                    _modelListFlow.value = models
-                    models.find {
-                        val selected = conversationState.value?.conversation?.selectedModel
-                            ?: 0L
-                        it.id == selected
-                    }?.let {
-                        _modelFlow.value = it
-                    }
-                }
+    internal suspend fun loadModels() {
+        val selected = conversationState.value?.conversation?.selectedModel
+            ?: _defaultModelName.value.ifEmpty { "" }
+
+        modelRepo.getModels().collect { models ->
+            _modelListFlow.value = models
+            models.find {
+                it.modelId == selected
+            }?.let {
+                _modelFlow.value = it
             }
+            return@collect
         }
     }
 
@@ -114,6 +123,14 @@ class ChatViewModel @Inject constructor(
                     }
                 }
             }
+        }
+    }
+
+    private val _defaultModelName = MutableStateFlow("")
+    internal suspend fun loadDefaultModel() {
+        preferences.defaultModelId.flow.collect { modelName ->
+            _defaultModelName.value = modelName
+            loadModels()
         }
     }
 

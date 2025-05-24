@@ -25,6 +25,7 @@ internal fun ModelSelectItem(
     vm: SettingsViewModel,
     models: List<ModelEntity>,
     selectTitle: String,
+    model: () -> String? = { null },
     onSelect: (ModelEntity) -> Unit
 ) {
     val taskModelName by vm.taskModelName.collectAsState()
@@ -49,8 +50,8 @@ internal fun ModelSelectItem(
     ) {
         Text(selectTitle, style = MaterialTheme.typography.labelLarge)
         Text(
-            text = taskModelName.run {
-                if (this.isEmpty()) {
+            text = model().run {
+                if (this == null || this.isEmpty()) {
                     "未选择"
                 } else {
                     this
@@ -67,7 +68,7 @@ internal fun ModelSelectItem(
             ModelSelectDialog(
                 modelList = models,
                 selected = models.find {
-                    it.modelId == vm.taskModelName.value
+                    it.modelId == model()
                 },
                 onSelect = {
                     Log.d("ModelSelect", "Model selected: $it")

@@ -43,10 +43,7 @@ fun ChatScreen(
     val lazyColumnState = rememberLazyListState()
 
     LaunchedEffect(conversationId) {
-        vm.loadProviders()
-        vm.loadModels()
-        vm.loadConversation(conversationId)
-        vm.loadSummaryTitle()
+        vm.load(conversationId)
     }
 
     LaunchedEffect(conversationState?.messages?.size) {
