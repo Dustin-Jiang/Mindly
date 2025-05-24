@@ -31,7 +31,6 @@ fun LazyListScope.ModelSettings(
     }
     item(key = "DefaultModelNameValue") {
         ModelSelectItem(
-            vm = vm,
             models = models,
             selectTitle = "选择默认模型",
             model = { vm.defaultModelName.value },
@@ -42,7 +41,6 @@ fun LazyListScope.ModelSettings(
     }
     item(key = "SummaryModelNameValue") {
         ModelSelectItem(
-            vm = vm,
             models = models,
             selectTitle = "选择任务模型",
             model = { vm.taskModelName.value },

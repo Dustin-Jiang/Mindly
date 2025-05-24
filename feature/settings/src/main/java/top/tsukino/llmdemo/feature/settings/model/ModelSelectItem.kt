@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,14 +23,18 @@ import top.tsukino.llmdemo.feature.common.component.ModelSelectDialog
 
 @Composable
 internal fun ModelSelectItem(
-    vm: SettingsViewModel,
     models: List<ModelEntity>,
     selectTitle: String,
     model: () -> String? = { null },
-    onSelect: (ModelEntity) -> Unit
+    onSelect: (ModelEntity) -> Unit,
+    sort: Boolean = true
 ) {
-    val taskModelName by vm.taskModelName.collectAsState()
     val showModelSelectDialog = remember { mutableStateOf(false) }
+    val modelList = if (sort) {
+        models.sortedBy { it.modelId }
+    } else {
+        models
+    }
 
     Column (
         modifier = Modifier
@@ -66,7 +71,7 @@ internal fun ModelSelectItem(
     when {
         showModelSelectDialog.value -> {
             ModelSelectDialog(
-                modelList = models,
+                modelList = modelList,
                 selected = models.find {
                     it.modelId == model()
                 },
