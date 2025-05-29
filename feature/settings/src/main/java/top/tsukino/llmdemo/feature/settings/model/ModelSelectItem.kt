@@ -18,6 +18,7 @@ import top.tsukino.llmdemo.feature.settings.SettingsViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.StateFlow
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.feature.common.component.ModelSelectDialog
 
@@ -25,7 +26,7 @@ import top.tsukino.llmdemo.feature.common.component.ModelSelectDialog
 internal fun ModelSelectItem(
     models: List<ModelEntity>,
     selectTitle: String,
-    model: () -> String? = { null },
+    model: StateFlow<String>,
     onSelect: (ModelEntity) -> Unit,
     sort: Boolean = true,
     caption: (@Composable () -> Unit)? = null
@@ -36,6 +37,8 @@ internal fun ModelSelectItem(
     } else {
         models
     }
+
+    val selected by model.collectAsState()
 
     Column (
         modifier = Modifier
@@ -57,8 +60,8 @@ internal fun ModelSelectItem(
         Text(selectTitle, style = MaterialTheme.typography.labelLarge)
         caption?.invoke()
         Text(
-            text = model().run {
-                if (this == null || this.isEmpty()) {
+            text = selected.run {
+                if (this.isEmpty()) {
                     "未选择"
                 } else {
                     this
@@ -75,7 +78,7 @@ internal fun ModelSelectItem(
             ModelSelectDialog(
                 modelList = modelList,
                 selected = models.find {
-                    it.modelId == model()
+                    it.modelId == selected
                 },
                 onSelect = {
                     Log.d("ModelSelect", "Model selected: $it")

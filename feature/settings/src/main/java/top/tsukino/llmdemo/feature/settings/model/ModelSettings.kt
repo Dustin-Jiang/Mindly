@@ -33,7 +33,7 @@ fun LazyListScope.ModelSettings(
         ModelSelectItem(
             models = models,
             selectTitle = "选择默认模型",
-            model = { vm.defaultModelName.value },
+            model = vm.defaultModelName,
             onSelect = {
                 vm.updateDefaultModelId(it.modelId)
             }
@@ -43,7 +43,7 @@ fun LazyListScope.ModelSettings(
         ModelSelectItem(
             models = models,
             selectTitle = "选择任务模型",
-            model = { vm.taskModelName.value },
+            model = vm.taskModelName,
             onSelect = {
                 vm.updateTaskModelId(it.modelId)
             }
@@ -53,7 +53,7 @@ fun LazyListScope.ModelSettings(
         ModelSelectItem(
             models = models,
             selectTitle = "选择语音识别模型",
-            model = { vm.sttModelName.value },
+            model = vm.sttModelName,
             onSelect = {
                 vm.updateSttModelId(it.modelId)
             },
