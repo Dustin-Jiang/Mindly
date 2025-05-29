@@ -56,8 +56,6 @@ dependencies {
     implementation(libs.multiplatform.markdown.renderer.m3)
     implementation(libs.multiplatform.markdown.renderer.android)
 
-    implementation(libs.tech.pw.renderx)
-
     ksp(libs.hilt.android.compiler)
 
     implementation(

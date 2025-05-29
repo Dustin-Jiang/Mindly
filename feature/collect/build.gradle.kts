@@ -8,6 +8,8 @@ plugins {
     alias(
         libs.plugins.kotlin.compose
     )
+
+    id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
 }
 
@@ -51,6 +53,10 @@ dependencies {
     implementation(project(":feature:common"))
     implementation(project(":data"))
     implementation(project(":config"))
+
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.hilt.android.compiler)
 
     implementation(
         libs.androidx.core.ktx
