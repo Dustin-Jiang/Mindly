@@ -59,12 +59,6 @@ class SettingsViewModel @Inject constructor (
         withScope {
             viewModelScope.launch {
                 val id = providerRepo.insertProvider(providerEntity)
-                val provider = providerRepo.getProvider(id)!!
-                providerRepo.updateProviderModels(provider)
-                val models = modelRepo.getModelsByProviderId(id)
-                models.collect { models ->
-                    Log.d("SettingsViewModel", "updateProviderModels: $models")
-                }
             }
         }
     }
