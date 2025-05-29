@@ -27,7 +27,8 @@ internal fun ModelSelectItem(
     selectTitle: String,
     model: () -> String? = { null },
     onSelect: (ModelEntity) -> Unit,
-    sort: Boolean = true
+    sort: Boolean = true,
+    caption: (@Composable () -> Unit)? = null
 ) {
     val showModelSelectDialog = remember { mutableStateOf(false) }
     val modelList = if (sort) {
@@ -54,6 +55,7 @@ internal fun ModelSelectItem(
             )
     ) {
         Text(selectTitle, style = MaterialTheme.typography.labelLarge)
+        caption?.invoke()
         Text(
             text = model().run {
                 if (this == null || this.isEmpty()) {

@@ -49,6 +49,23 @@ fun LazyListScope.ModelSettings(
             }
         )
     }
+    item(key = "SttModelNameValue") {
+        ModelSelectItem(
+            models = models,
+            selectTitle = "选择语音识别模型",
+            model = { vm.sttModelName.value },
+            onSelect = {
+                vm.updateSttModelId(it.modelId)
+            },
+            caption = {
+                Text(
+                    text = "请确保选择的模型支持语音识别",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        )
+    }
 
     if (vm.taskModelName.value.isNotEmpty()) {
         TaskModelSettings (
