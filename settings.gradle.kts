@@ -60,3 +60,6 @@ include(
 include(
     ":config"
 )
+include(
+    ":feature:collect"
+)

@@ -64,6 +64,7 @@ dependencies {
 
     implementation(project(":feature:home"))
     implementation(project(":feature:chat"))
+    implementation(project(":feature:collect"))
     implementation(project(":feature:settings"))
 
     implementation(libs.hilt.android)

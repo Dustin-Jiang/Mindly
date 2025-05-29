@@ -21,11 +21,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import top.tsukino.llmdemo.feature.collect.CollectScreen
 import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.motion.materialSharedAxisZIn
 import top.tsukino.llmdemo.feature.common.motion.materialSharedAxisZOut
@@ -140,6 +138,9 @@ fun IndexScreen(
         ) {
             composable(route = PageShowOnNav.Home.toString()) {
                 HomeScreen(mainController, navController)
+            }
+            composable(route = PageShowOnNav.Collect.toString()) {
+                CollectScreen(mainController)
             }
             composable(route = PageShowOnNav.Settings.toString()) {
                 SettingsScreen(mainController)

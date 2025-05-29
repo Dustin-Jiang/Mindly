@@ -1,8 +1,9 @@
-package top.tsukino.llmdemo.home
+package top.tsukino.llmdemo.feature.common.component
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -12,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(
@@ -19,6 +21,10 @@ import androidx.compose.ui.text.style.TextOverflow
 )
 @Composable
 fun TitleBar(
+    title: String,
+    navigationIcon: ImageVector?,
+    onNavigation: () -> Unit = {},
+    actions: @Composable (RowScope.() -> Unit) = {},
     scrollBehavior: TopAppBarScrollBehavior
 ) {
     LargeTopAppBar(
@@ -27,27 +33,22 @@ fun TitleBar(
         ),
         title = {
             Text(
-                "LLM Demo",
+                title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
         },
         navigationIcon = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = "Localized description"
-                )
+            navigationIcon?.let {
+                IconButton(onClick = onNavigation) {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = "Localized description"
+                    )
+                }
             }
         },
-        actions = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = "Localized description"
-                )
-            }
-        },
+        actions = actions,
         scrollBehavior = scrollBehavior
     )
 }
