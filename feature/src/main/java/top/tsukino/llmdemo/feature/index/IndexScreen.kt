@@ -1,5 +1,6 @@
 package top.tsukino.llmdemo.feature.index
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,16 +12,19 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.window.core.layout.WindowWidthSizeClass
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import top.tsukino.llmdemo.feature.collect.CollectScreen
@@ -80,21 +84,35 @@ private fun IndexScreenNavBar(
 
 @Composable
 private fun IndexScreenLayout(
+    mainController: MainController,
     navBar: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val currentWindowSize = currentWindowAdaptiveInfo().windowSizeClass
     when (currentWindowSize.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> Scaffold(
-            bottomBar = navBar
+            bottomBar = navBar,
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = mainController.snackbarHostState
+                )
+            }
         ) {
             content(it)
         }
-        else -> Row(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            navBar()
-            content(PaddingValues())
+        else -> Box {
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                navBar()
+                content(PaddingValues())
+            }
+            SnackbarHost(
+                hostState = mainController.snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 16.dp)
+            )
         }
     }
 }
@@ -111,6 +129,7 @@ fun IndexScreen(
     val startRoute = PageShowOnNav.Home.toString()
 
     IndexScreenLayout(
+        mainController = mainController,
         navBar = {
             IndexScreenNavBar(
                 pages = vm.indexScreenConfig.pages,

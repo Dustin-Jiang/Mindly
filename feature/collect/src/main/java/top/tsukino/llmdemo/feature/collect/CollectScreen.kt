@@ -54,6 +54,7 @@ fun CollectScreen(
                     modifier = Modifier.padding(16.dp).align(Alignment.BottomEnd)
                 ) {
                     CreateRecordButton(
+                        mainController = mainController,
                         onStart = {},
                         onStop = {}
                     )

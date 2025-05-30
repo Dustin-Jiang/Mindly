@@ -1,5 +1,6 @@
 package top.tsukino.llmdemo.feature.common
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.navOptions
@@ -7,7 +8,8 @@ import kotlinx.coroutines.CoroutineScope
 
 class MainController(
     val scope: CoroutineScope,
-    val navController: NavHostController
+    val navController: NavHostController,
+    val snackbarHostState: SnackbarHostState,
 ) {
     fun navigate(dest: NavDest) =
         navController.navigate(dest)

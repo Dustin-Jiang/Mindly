@@ -2,9 +2,13 @@ package top.tsukino.llmdemo.feature
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,7 +36,8 @@ internal fun MainApp() {
 
     val controller = MainController(
         scope = rememberCoroutineScope(),
-        navController = navController
+        navController = navController,
+        snackbarHostState = remember { SnackbarHostState() },
     )
 
     val animation = NavAnimation(
