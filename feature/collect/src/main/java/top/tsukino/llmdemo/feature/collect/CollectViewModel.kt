@@ -18,6 +18,10 @@ class CollectViewModel @Inject constructor(
     val recorder = AudioRecorder(context)
 
     internal fun startRecording() {
+        recorder.start()
+    }
 
+    internal fun stopRecording() {
+        recorder.stop()
     }
 }

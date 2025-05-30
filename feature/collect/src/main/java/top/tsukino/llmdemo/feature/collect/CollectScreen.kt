@@ -55,8 +55,12 @@ fun CollectScreen(
                 ) {
                     CreateRecordButton(
                         mainController = mainController,
-                        onStart = {},
-                        onStop = {}
+                        onStart = {
+                            vm.startRecording()
+                        },
+                        onStop = {
+                            vm.stopRecording()
+                        }
                     )
                 }
             }

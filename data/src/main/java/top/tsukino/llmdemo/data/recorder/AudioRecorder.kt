@@ -2,6 +2,7 @@ package top.tsukino.llmdemo.data.recorder
 
 import android.content.Context
 import android.media.MediaRecorder
+import android.util.Log
 import java.io.File
 import java.io.IOException
 
@@ -20,6 +21,7 @@ class AudioRecorder(
         if (outputFile!!.exists()) {
             outputFile!!.delete()
         }
+        Log.d("AudioRecorder", "Output file prepared: ${outputFile!!.absolutePath}")
         recorder?.apply {
             prepare()
         }
@@ -29,6 +31,7 @@ class AudioRecorder(
         if (status != RecordingState.Idle) {
             throw IllegalStateException("Recorder is not in Idle state. Current state: $status")
         }
+        prepare()
         recorder = MediaRecorder().also {
             it.apply {
                 setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
