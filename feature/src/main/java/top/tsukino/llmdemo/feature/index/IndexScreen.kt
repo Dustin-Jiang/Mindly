@@ -1,12 +1,17 @@
 package top.tsukino.llmdemo.feature.index
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
@@ -61,7 +66,9 @@ private fun IndexScreenNavBar(
             }
         }
         else -> NavigationRail(
-            modifier = Modifier.zIndex(1000f)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            modifier = Modifier
+                .zIndex(1000f)
         ) {
             Spacer(Modifier.weight(1f))
             pages.forEach { page ->
@@ -89,6 +96,8 @@ private fun IndexScreenLayout(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val currentWindowSize = currentWindowAdaptiveInfo().windowSizeClass
+    val paddingValues = WindowInsets.navigationBars.asPaddingValues()
+
     when (currentWindowSize.windowWidthSizeClass) {
         WindowWidthSizeClass.COMPACT -> Scaffold(
             bottomBar = navBar,
@@ -105,7 +114,7 @@ private fun IndexScreenLayout(
                 modifier = Modifier.fillMaxSize()
             ) {
                 navBar()
-                content(PaddingValues())
+                content(paddingValues)
             }
             SnackbarHost(
                 hostState = mainController.snackbarHostState,
