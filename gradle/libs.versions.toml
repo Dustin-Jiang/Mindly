@@ -18,10 +18,14 @@ composeBom = "2024.09.00"
 appcompat = "1.7.0"
 material = "1.12.0"
 androidxNavigationCompose = "2.7.6"
+media3Exoplayer = "1.6.1"
+media3ExoplayerDash = "1.6.1"
+media3Ui = "1.6.1"
 multiplatformMarkdownRendererAndroid = "0.32.0"
 openaiClient = "4.0.1"
 renderxVersion = "1.0.0"
 roomCompiler = "2.6.1"
+media3ExoplayerVersion = "1.7.1"
 
 [libraries]
 aallam-openai-client = { module = "com.aallam.openai:openai-client", version.ref = "openaiClient" }
@@ -31,6 +35,9 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
+androidx-media3-exoplayer-dash = { module = "androidx.media3:media3-exoplayer-dash", version.ref = "media3ExoplayerDash" }
+androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3Ui" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidxNavigationCompose" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomCompiler" }
@@ -58,6 +65,7 @@ multiplatform-markdown-renderer-android = { module = "com.mikepenz:multiplatform
 multiplatform-markdown-renderer-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "multiplatformMarkdownRendererAndroid" }
 openai-client = { module = "com.aallam.openai:openai-client" }
 tech-pw-renderx = { module = "com.github.tech-pw:RenderX", version.ref = "renderxVersion" }
+media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3ExoplayerVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

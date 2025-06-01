@@ -7,10 +7,12 @@ import top.tsukino.llmdemo.data.database.dao.ConversationDao
 import top.tsukino.llmdemo.data.database.dao.MessageDao
 import top.tsukino.llmdemo.data.database.dao.ModelDao
 import top.tsukino.llmdemo.data.database.dao.ProviderDao
+import top.tsukino.llmdemo.data.database.dao.RecodingDao
 import top.tsukino.llmdemo.data.database.entity.ConversationEntity
 import top.tsukino.llmdemo.data.database.entity.MessageEntity
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.data.database.entity.ProviderEntity
+import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 
 @Database(
     entities = [
@@ -18,6 +20,7 @@ import top.tsukino.llmdemo.data.database.entity.ProviderEntity
         MessageEntity::class,
         ProviderEntity::class,
         ModelEntity::class,
+        RecordingEntity::class,
     ],
     version = 1,
     exportSchema = false
@@ -28,4 +31,5 @@ abstract class LLMDemoDatabase: RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun providerDao(): ProviderDao
     abstract fun modelDao(): ModelDao
+    abstract fun recordingDao(): RecodingDao
 }

@@ -63,6 +63,9 @@ dependencies {
 
     api(libs.hilt.android)
     api(libs.androidx.hilt.navigation.compose)
+    implementation(
+        libs.media3.exoplayer
+    )
     ksp(libs.hilt.android.compiler)
 
     api(libs.androidx.navigation.compose)

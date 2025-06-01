@@ -1,10 +1,13 @@
 package top.tsukino.llmdemo.data.recorder
 
 import android.content.Context
+import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
 import android.util.Log
+import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import java.io.File
 import java.io.IOException
+import java.util.Date
 
 class AudioRecorder(
     private val context: Context
@@ -22,28 +25,24 @@ class AudioRecorder(
             outputFile!!.delete()
         }
         Log.d("AudioRecorder", "Output file prepared: ${outputFile!!.absolutePath}")
-        recorder?.apply {
-            prepare()
-        }
+
     }
 
     fun start() {
         if (status != RecordingState.Idle) {
             throw IllegalStateException("Recorder is not in Idle state. Current state: $status")
         }
+        recorder = MediaRecorder()
         prepare()
-        recorder = MediaRecorder().also {
-            it.apply {
-                setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setOutputFile(outputFile!!.absolutePath)
-            }
+        recorder?.apply {
+            setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFile(outputFile!!.absolutePath)
+            prepare()
         }
         recorder?.let {
             try {
-                status = RecordingState.Preparing
-                prepare()
                 it.start()
                 status = RecordingState.Recording
             } catch (e: IOException) {
@@ -58,11 +57,27 @@ class AudioRecorder(
         }
     }
 
-    fun stop() {
+    fun stop(): RecordingEntity {
+        if (outputFile == null) {
+            throw IllegalStateException("Output file is not prepared. Call prepare() before stop().")
+        }
+
+        if (status != RecordingState.Recording) {
+            throw IllegalStateException("Recorder is not in Recording state. Current state: $status")
+        }
+
+        var duration = 0L
         recorder?.let {
             try {
                 it.stop()
                 status = RecordingState.Stopped
+
+                if (outputFile!!.exists()) {
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(outputFile!!.absolutePath)
+                    val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                    duration = durationString?.toLongOrNull() ?: 0L // 时长是字符串，单位是毫秒
+                }
             } catch (e: RuntimeException) {
                 status = RecordingState.Error("Failed to stop recording: ${e.message}")
                 e.printStackTrace()
@@ -71,6 +86,14 @@ class AudioRecorder(
             }
         }
         recorder = null
+
+        return RecordingEntity(
+            id = 0L,
+            path = outputFile!!.name,
+            title = "新速记",
+            duration = duration,
+            timestamp = Date(),
+        )
     }
 
     private fun release() {
