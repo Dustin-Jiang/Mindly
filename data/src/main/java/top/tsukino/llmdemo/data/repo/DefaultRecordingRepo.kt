@@ -1,14 +1,18 @@
 package top.tsukino.llmdemo.data.repo
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import top.tsukino.llmdemo.data.database.LLMDemoDatabase
 import top.tsukino.llmdemo.data.database.dao.RecodingDao
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import top.tsukino.llmdemo.data.repo.base.RecordingRepo
+import java.io.File
 import javax.inject.Inject
 
 class DefaultRecordingRepo @Inject constructor(
-    private val database: LLMDemoDatabase
+    private val database: LLMDemoDatabase,
+    @ApplicationContext private val context: Context
 ): RecordingRepo {
     override suspend fun getRecording(
         id: Long
@@ -29,6 +33,13 @@ class DefaultRecordingRepo @Inject constructor(
     override suspend fun deleteRecording(
         recording: RecordingEntity
     ) {
+        val path = recording.path
+        val file = File(context.getExternalFilesDir(null), path)
+        if (file.exists()) {
+            if (!file.delete()) {
+                throw IllegalStateException("Failed to delete file: $path")
+            }
+        }
         return database.recordingDao().deleteRecording(recording)
     }
 

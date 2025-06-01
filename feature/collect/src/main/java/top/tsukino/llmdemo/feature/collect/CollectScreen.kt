@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.zIndex
 import top.tsukino.llmdemo.feature.collect.items.CollectItem
 import top.tsukino.llmdemo.feature.collect.items.RecordingItem
+import top.tsukino.llmdemo.feature.collect.items.RecordingItemManageSheet
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerViewModel
 
 @OptIn(
@@ -58,6 +59,9 @@ fun CollectScreen(
                             playerVm.setAudioFile(path)
                             vm.setCurrentShowing("${item.id}")
                         }
+                    },
+                    onShowManageSheet = {
+                        vm.showRecordingManageSheet(it)
                     },
                     onPlayClick = { playerVm.play() },
                     onPauseClick = { playerVm.pause() },
@@ -119,4 +123,16 @@ fun CollectScreen(
         }
     }
 
+    when {
+        vm.showRecordingManageSheet.collectAsState().value != null -> {
+            RecordingItemManageSheet(
+                id = vm.showRecordingManageSheet.collectAsState().value ?: 0L,
+                onDismiss = { vm.showRecordingManageSheet(null) },
+                onDelete = { id ->
+                    vm.deleteRecording(id)
+                    vm.showRecordingManageSheet(null)
+                }
+            )
+        }
+    }
 }

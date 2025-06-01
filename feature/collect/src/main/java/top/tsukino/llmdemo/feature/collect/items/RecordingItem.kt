@@ -1,7 +1,9 @@
 package top.tsukino.llmdemo.feature.collect.items
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +37,7 @@ class RecordingItem(
     private val playerState: AudioPlayerState,
 
     private val onShow: (path: String) -> Unit,
+    private val onShowManageSheet: (Long) -> Unit,
 
     private val onPlayClick: () -> Unit,
     private val onPauseClick: () -> Unit,
@@ -42,18 +45,22 @@ class RecordingItem(
     private val onSeekForward: (Long) -> Unit,
     private val onSeekBackward: (Long) -> Unit,
 ) : CollectItem {
+    @OptIn(
+        ExperimentalFoundationApi::class
+    )
     @Composable
     override fun Display() {
         Column(
-            modifier = Modifier.fillMaxWidth().clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(
-                    bounded = true,
-                ),
-                onClick = {
-                    onShow(data.path)
-                }
-            )
+            modifier = Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = {
+                        onShow(data.path)
+                    },
+                    onLongClick = {
+                        onShowManageSheet(data.id)
+                    }
+                )
         ) {
             Column(
                 modifier = Modifier.padding(

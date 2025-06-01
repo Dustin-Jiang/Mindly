@@ -52,4 +52,21 @@ class CollectViewModel @Inject constructor(
     internal fun clearCurrentShowing() {
         _currentShowing.value = null
     }
+
+    val _showRecordingManageSheet = MutableStateFlow<Long?>(null)
+    val showRecordingManageSheet = _showRecordingManageSheet.asStateFlow()
+
+    internal fun showRecordingManageSheet(id: Long?) {
+        _showRecordingManageSheet.value = id
+    }
+
+    internal fun deleteRecording(id: Long) {
+        val item = _recordingList.value.find { it.id == id }
+        item?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                recordingRepo.deleteRecording(it)
+            }
+        }
+        _showRecordingManageSheet.value = null
+    }
 }
