@@ -3,6 +3,7 @@ package top.tsukino.llmdemo.data.recorder
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
+import android.os.Build
 import android.util.Log
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import java.io.File
@@ -19,13 +20,12 @@ class AudioRecorder(
 
     fun prepare() {
         status = RecordingState.Preparing
-        val fileName = "recording_${System.currentTimeMillis()}.m4a"
+        val fileName = "recording_${System.currentTimeMillis()}.webm"
         outputFile = File(context.getExternalFilesDir(null), fileName)
         if (outputFile!!.exists()) {
             outputFile!!.delete()
         }
         Log.d("AudioRecorder", "Output file prepared: ${outputFile!!.absolutePath}")
-
     }
 
     fun start() {
@@ -36,8 +36,13 @@ class AudioRecorder(
         prepare()
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFormat(MediaRecorder.OutputFormat.WEBM)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                setAudioEncoder(MediaRecorder.AudioEncoder.OPUS)
+            }
+            else {
+                setAudioEncoder(MediaRecorder.AudioEncoder.VORBIS)
+            }
             setOutputFile(outputFile!!.absolutePath)
             prepare()
         }
