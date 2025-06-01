@@ -1,7 +1,9 @@
 package top.tsukino.llmdemo.home
 
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,9 @@ import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.NavDest
 import top.tsukino.llmdemo.feature.common.utils.DateTimeUtils
 
+@OptIn(
+    ExperimentalFoundationApi::class
+)
 @Composable
 internal fun ConversationItem(
     mainController: MainController,
@@ -28,24 +33,20 @@ internal fun ConversationItem(
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(
-                Unit
-            ) {
-                detectTapGestures(
-                    onLongPress = {
-                        onShowSheet(item.id)
-                    },
-                    onTap = {
-                        mainController.navigate(NavDest.Chat(id = item.id))
-                    }
-                )
-            }
+            .combinedClickable(
+                onClick = {
+                    mainController.navigate(NavDest.Chat(id = item.id))
+                },
+                onLongClick = {
+                    onShowSheet(item.id)
+                }
+            )
             .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         Column {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(

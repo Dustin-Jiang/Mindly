@@ -1,12 +1,17 @@
 package top.tsukino.llmdemo.feature.settings.model
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -39,18 +44,13 @@ internal fun ModelSelectItem(
     }
 
     val selected by model.collectAsState()
+    val interactionSource = remember { MutableInteractionSource() }
 
     Column (
         modifier = Modifier
             .fillMaxWidth()
-            .pointerInput(
-                Unit
-            ) {
-                detectTapGestures(
-                    onTap = {
-                        showModelSelectDialog.value = true
-                    }
-                )
+            .clickable {
+                showModelSelectDialog.value = true
             }
             .padding(
                 horizontal = 16.dp,
