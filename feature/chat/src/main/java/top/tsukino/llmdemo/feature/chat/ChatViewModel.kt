@@ -215,49 +215,20 @@ class ChatViewModel @Inject constructor(
         providerName?.let { provider ->
             val chatContents = conversationState.value?.messages?.takeLast(4)?.joinToString("\n\n"){ it.text }
             chatContents?.let { content ->
-                Log.d("handleSummaryTitle", "Chat contents: $content")
-
-                val summaryMessage = ChatMessage(
-                    content = "Create an emoji-based title that concisely reflects the chat's main topic (max 12 words, same language as the chat). Avoid quotes or special formatting; the title must start with a relevant emoji.\n" +
-                            "\n" +
-                            "Output as JSON: { \"title\": \"Your Title\" }\n" +
-                            "\n" +
-                            "Examples:\n" +
-                            "- { \"title\": \"\uD83D\uDCC9 Stock Market Basics\" }\n" +
-                            "\n" +
-                            "Chat History:\n" +
-                            "<chat_history>\n" +
-                            "$content\n" +
-                            "</chat_history>",
-                    role = Role.User
-                )
-
-                val title: MutableList<String> = mutableListOf()
-                api.getProvider(provider)?.handleChat(
-                    model = modelFlow.value?.modelId ?: "",
-                    message = summaryMessage,
-                    history = emptyList(),
-                    onUpdate = {
-                        title.add(it)
-                    },
-                    onFinish = { endReason ->
-                        val titleResult = title.joinToString("")
-                        var title: String? = null
-                        try {
-                            title = JSONObject(titleResult).getString("title")
-                        }
-                        catch(e: Exception) {
-                            Log.e("handleSummaryTitle", "Error parsing JSON: ${e.message}")
-                        }
-                        title?.let {
+                val model = taskModel?.modelId
+                model?.let { model ->
+                    api.getProvider(provider)?.handleSummary(
+                        model = model,
+                        content = content,
+                        onFinish = { title ->
                             conversationRepo.updateConversationTitle(
                                 id = _conversationState.value?.conversation?.id ?: 0L,
-                                title = it,
+                                title = title,
                             )
+                            return@handleSummary
                         }
-                        return@handleChat
-                    }
-                )
+                    )
+                }
             }
         }
     }

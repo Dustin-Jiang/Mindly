@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.io.RawSource
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
+import org.json.JSONObject
 import java.io.File
 
 class ApiProvider(
@@ -120,6 +121,51 @@ class ApiProvider(
                 onUpdate(content.joinToString(""))
             }
         }
+    }
+
+    suspend fun handleSummary(
+        model: String,
+        content: String,
+        onFinish: suspend (title: String) -> Unit,
+    ) {
+        Log.d("handleSummaryTitle", "Chat contents: $content")
+
+        val summaryMessage = ChatMessage(
+            content = "Create an emoji-based title that concisely reflects the chat's main topic (max 12 words, same language as the chat). Avoid quotes or special formatting; the title must start with a relevant emoji.\n" +
+                    "\n" +
+                    "Output as JSON: { \"title\": \"Your Title\" }\n" +
+                    "\n" +
+                    "Examples:\n" +
+                    "- { \"title\": \"\uD83D\uDCC9 Stock Market Basics\" }\n" +
+                    "\n" +
+                    "Chat History:\n" +
+                    "<chat_history>\n" +
+                    "$content\n" +
+                    "</chat_history>",
+            role = Role.User
+        )
+
+        val title: MutableList<String> = mutableListOf()
+        handleChat(
+            model = model,
+            message = summaryMessage,
+            history = emptyList(),
+            onUpdate = {
+                title.add(it)
+            },
+            onFinish = { endReason ->
+                val titleResult = title.joinToString("")
+                var title: String? = null
+                try {
+                    title = JSONObject(titleResult).getString("title")
+                    title?.let { onFinish(it) }
+                }
+                catch(e: Exception) {
+                    Log.e("handleSummaryTitle", "Error parsing JSON: ${e.message}")
+                }
+                return@handleChat
+            }
+        )
     }
 
     suspend fun sendTranscript(
