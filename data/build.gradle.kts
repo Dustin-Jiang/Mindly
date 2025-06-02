@@ -62,6 +62,10 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.android.compiler)
 
+    implementation("com.github.naman14:TAndroidLame:1.1") {
+        exclude(group = "com.android.support", module = "support-compat")
+    }
+
     implementation(
         libs.androidx.core.ktx
     )

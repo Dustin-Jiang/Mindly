@@ -16,16 +16,20 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.component.TitleBar
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.feature.collect.items.CollectItem
 import top.tsukino.llmdemo.feature.collect.items.RecordingItem
 import top.tsukino.llmdemo.feature.collect.items.toItemId
 import top.tsukino.llmdemo.feature.collect.items.RecordingItemManageSheet
+import top.tsukino.llmdemo.feature.common.component.ResultType
+import top.tsukino.llmdemo.feature.common.component.ResultView
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerViewModel
 
 @OptIn(
@@ -100,11 +104,23 @@ fun CollectScreen(
             Box(
                 modifier = Modifier.fillMaxSize()
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(items = collectList.value) { item ->
-                        item.Display()
+                if (collectList.value.isEmpty()) {
+                    Box(
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        ResultView(
+                            type = ResultType.EMPTY2,
+                            text = "没有收藏",
+                        )
+                    }
+                }
+                else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(items = collectList.value) { item ->
+                            item.Display()
+                        }
                     }
                 }
             }

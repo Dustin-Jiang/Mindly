@@ -38,12 +38,14 @@ enum class ResultType {
     SUCCESS,
     ERROR,
     EMPTY,
+    EMPTY2
 }
 
 val Icon = mapOf<ResultType, String>(
     ResultType.SUCCESS to "\\(^ω^\")/",
     ResultType.ERROR to "(QwQ\")",
-    ResultType.EMPTY to "(^-^*)"
+    ResultType.EMPTY to "(^-^*)",
+    ResultType.EMPTY2 to "o(-A-*)ゞ",
 )
 
 @Composable

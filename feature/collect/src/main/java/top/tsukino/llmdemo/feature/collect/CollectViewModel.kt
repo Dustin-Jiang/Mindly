@@ -43,6 +43,12 @@ class CollectViewModel @Inject constructor(
     private val _currentShowing = MutableStateFlow<ItemId?>(null)
     val currentShowing = _currentShowing.asStateFlow()
 
+    private val _providerFlow = MutableStateFlow<List<ProviderEntity>>(emptyList())
+    private val _modelFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
+    private val _sttModelName = MutableStateFlow<String?>(null)
+    private val _summaryModelName = MutableStateFlow<String?>(null)
+    private val _enableSummaryTitle = MutableStateFlow(false)
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             recordingRepo.getRecordingList().collect(_recordingList::emit)
@@ -75,14 +81,37 @@ class CollectViewModel @Inject constructor(
     }
 
     internal fun startRecording() {
-        recorder.start()
+        try {
+            recorder.start()
+            Log.d("CollectViewModel", "Recording started successfully")
+        } catch (e: Exception) {
+            Log.e("CollectViewModel", "Failed to start recording", e)
+            mainController.scope.launch {
+                mainController.snackbarHostState.showSnackbar(
+                    message = "开始录音失败: ${e.message}",
+                    withDismissAction = true
+                )
+            }
+        }
     }
 
     internal fun stopRecording() {
-        val recording = recorder.stop()
-        Log.d("CollectViewModel", "Recording stopped: ${recording.path}")
         viewModelScope.launch(Dispatchers.IO) {
-            recordingRepo.insertRecording(recording)
+            try {
+                val recording = recorder.stop()
+                Log.d("CollectViewModel", "Recording stopped: ${recording.path}")
+                viewModelScope.launch(Dispatchers.IO) {
+                    recordingRepo.insertRecording(recording)
+                }
+            } catch (e: Exception) {
+                Log.e("CollectViewModel", "Failed to stop recording", e)
+                mainController.scope.launch {
+                    mainController.snackbarHostState.showSnackbar(
+                        message = "停止录音失败: ${e.message}",
+                        withDismissAction = true
+                    )
+                }
+            }
         }
     }
 
@@ -108,76 +137,66 @@ class CollectViewModel @Inject constructor(
             }
         }
         _showRecordingManageSheet.value = null
-    }
-
-    private val _providerFlow = MutableStateFlow<List<ProviderEntity>>(emptyList())
-    private val _modelFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
-    private val _sttModelName = MutableStateFlow<String?>(null)
-    private val _summaryModelName = MutableStateFlow<String?>(null)
-    private val _enableSummaryTitle = MutableStateFlow(false)
-
-    internal fun transcriptRecording(id: Long) {
+    }    internal fun transcriptRecording(id: Long) {
         val item = _recordingList.value.find { it.id == id }
-        item?.let { item ->
-            setCurrentShowing(item.toItemId())
-            val model = _modelFlow.value.firstOrNull { _sttModelName.value == it.modelId }
-            model?.let { model ->
-                val provider = _providerFlow.value.firstOrNull { it.id == model.providerId }?.name
-                provider?.let { provider ->
+        item?.let { recordingItem ->
+            setCurrentShowing(recordingItem.toItemId())
+            val sttModel = _modelFlow.value.firstOrNull { _sttModelName.value == it.modelId }
+            sttModel?.let { selectedModel ->
+                val providerName = _providerFlow.value.firstOrNull { it.id == selectedModel.providerId }?.name
+                providerName?.let { providerName ->
                     mainController.scope.launch(Dispatchers.IO) {
                         try {
-                            val transcript = api.getProvider(provider)?.sendTranscript(
-                                model = model.modelId,
-                                file = File(context.getExternalFilesDir(null), item.path)
+                            val transcript = api.getProvider(providerName)?.sendTranscript(
+                                model = selectedModel.modelId,
+                                file = File(context.getExternalFilesDir(null), recordingItem.path)
                             )
-                            Log.d("CollectViewModel", "Transcript for ${item.path}: ${transcript?.text}")
+                            Log.d("CollectViewModel", "Transcript for ${recordingItem.path}: ${transcript?.text}")
                             recordingRepo.updateRecording(
-                                item.copy(transcript = transcript?.text ?: "")
+                                recordingItem.copy(transcript = transcript?.text ?: "")
                             )
                             if (_enableSummaryTitle.value && transcript?.text?.isNotEmpty() == true) {
-                                recordingSummary(item.id)
+                                recordingSummary(recordingItem.id)
                             }
                         } catch (e: Exception) {
-                            Log.e("CollectViewModel", "Error transcribing recording ${item.path}", e)
+                            Log.e("CollectViewModel", "Error transcribing recording ${recordingItem.path}", e)
                         }
                     }
                 }
             }
         }
-    }
-
-    internal fun recordingSummary(id: Long) {
+    }    internal fun recordingSummary(id: Long) {
         if (!_enableSummaryTitle.value) {
             Log.w("CollectViewModel", "Summary title generation is disabled")
             throw IllegalStateException("请先启用摘要标题生成")
         }
         val item = _recordingList.value.find { it.id == id }
-        item?.let { item ->
-            if (item.transcript.isEmpty()) {
-                Log.w("CollectViewModel", "Cannot summarize recording ${item.path} without transcript")
+        item?.let { recordingItem ->
+            if (recordingItem.transcript.isEmpty()) {
+                Log.w("CollectViewModel", "Cannot summarize recording ${recordingItem.path} without transcript")
                 return transcriptRecording(id)
             }
-            val model = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
-            if (model == null) {
+            val summaryModel = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
+            if (summaryModel == null) {
                 Log.w("CollectViewModel", "No model found for summary: ${_summaryModelName.value}")
                 throw IllegalStateException("请先选择摘要模型")
             }
-            val provider = _providerFlow.value.firstOrNull { it.id == model.providerId }?.name
-            provider?.let { provider ->
+            val providerName = _providerFlow.value.firstOrNull { it.id == summaryModel.providerId }?.name
+            providerName?.let { providerName ->
                 mainController.scope.launch(Dispatchers.IO) {
                     try {
-                        api.getProvider(provider)?.handleSummary(
-                            model = model.modelId,
-                            content = item.transcript,
+                        api.getProvider(providerName)?.handleSummary(
+                            model = summaryModel.modelId,
+                            content = recordingItem.transcript,
                             onFinish = { summary ->
-                                Log.d("CollectViewModel", "Summary for ${item.path}: $summary")
+                                Log.d("CollectViewModel", "Summary for ${recordingItem.path}: $summary")
                                 recordingRepo.updateRecording(
-                                    item.copy(title = summary)
+                                    recordingItem.copy(title = summary)
                                 )
                             },
                         )
                     } catch (e: Exception) {
-                        Log.e("CollectViewModel", "Error summarizing recording ${item.path}", e)
+                        Log.e("CollectViewModel", "Error summarizing recording ${recordingItem.path}", e)
                     }
                 }
             }

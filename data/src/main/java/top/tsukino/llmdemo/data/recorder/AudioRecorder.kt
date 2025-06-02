@@ -5,6 +5,7 @@ import android.media.MediaMetadataRetriever
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.Log
+import kotlinx.coroutines.runBlocking
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import java.io.File
 import java.io.IOException
@@ -13,15 +14,24 @@ import java.util.Date
 class AudioRecorder(
     private val context: Context
 ) {
+    private var fileName: String = ""
     private var outputFile: File? = null
     private var recorder: MediaRecorder? = null
 
     private var status: RecordingState = RecordingState.Idle
 
+    private val converter = AudioConverter()
+    private val bitrate = 240 * 1024
+
     fun prepare() {
         status = RecordingState.Preparing
-        val fileName = "recording_${System.currentTimeMillis()}.webm"
-        outputFile = File(context.getExternalFilesDir(null), fileName)
+        fileName = "recording_${System.currentTimeMillis()}"
+        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ".webm"
+        } else {
+            ".m4a"
+        }
+        outputFile = File(context.getExternalFilesDir(null), "$fileName$format")
         if (outputFile!!.exists()) {
             outputFile!!.delete()
         }
@@ -36,13 +46,17 @@ class AudioRecorder(
         prepare()
         recorder?.apply {
             setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION)
-            setOutputFormat(MediaRecorder.OutputFormat.WEBM)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                setOutputFormat(MediaRecorder.OutputFormat.WEBM)
                 setAudioEncoder(MediaRecorder.AudioEncoder.OPUS)
             }
             else {
-                setAudioEncoder(MediaRecorder.AudioEncoder.VORBIS)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             }
+            // 设置音频编码比特率为 240kbps
+            setAudioEncodingBitRate(bitrate)
+            setAudioSamplingRate(44100)
             setOutputFile(outputFile!!.absolutePath)
             prepare()
         }
@@ -62,7 +76,7 @@ class AudioRecorder(
         }
     }
 
-    fun stop(): RecordingEntity {
+    suspend fun stop(): RecordingEntity {
         if (outputFile == null) {
             throw IllegalStateException("Output file is not prepared. Call prepare() before stop().")
         }
@@ -82,6 +96,12 @@ class AudioRecorder(
                     retriever.setDataSource(outputFile!!.absolutePath)
                     val durationString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                     duration = durationString?.toLongOrNull() ?: 0L // 时长是字符串，单位是毫秒
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                        val converted = File(context.getExternalFilesDir(null), "${fileName}.mp3")
+                        converter.encode(outputFile!!, converted)
+                        outputFile!!.delete()
+                        outputFile = converted
+                    }
                 }
             } catch (e: RuntimeException) {
                 status = RecordingState.Error("Failed to stop recording: ${e.message}")
@@ -110,7 +130,7 @@ class AudioRecorder(
     fun cancel() {
         recorder?.let {
             if (status == RecordingState.Recording) {
-                stop()
+                runBlocking { stop() }
             }
             release()
         }
