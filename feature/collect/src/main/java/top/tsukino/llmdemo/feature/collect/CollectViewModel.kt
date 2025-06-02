@@ -149,33 +149,35 @@ class CollectViewModel @Inject constructor(
     internal fun recordingSummary(id: Long) {
         if (!_enableSummaryTitle.value) {
             Log.w("CollectViewModel", "Summary title generation is disabled")
-            return
+            throw IllegalStateException("请先启用摘要标题生成")
         }
         val item = _recordingList.value.find { it.id == id }
         item?.let { item ->
             if (item.transcript.isEmpty()) {
                 Log.w("CollectViewModel", "Cannot summarize recording ${item.path} without transcript")
-                return
+                return transcriptRecording(id)
             }
             val model = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
-            model?.let { model ->
-                val provider = _providerFlow.value.firstOrNull { it.id == model.providerId }?.name
-                provider?.let { provider ->
-                    mainController.scope.launch(Dispatchers.IO) {
-                        try {
-                            api.getProvider(provider)?.handleSummary(
-                                model = model.modelId,
-                                content = item.transcript,
-                                onFinish = { summary ->
-                                    Log.d("CollectViewModel", "Summary for ${item.path}: $summary")
-                                    recordingRepo.updateRecording(
-                                        item.copy(title = summary)
-                                    )
-                                },
-                            )
-                        } catch (e: Exception) {
-                            Log.e("CollectViewModel", "Error summarizing recording ${item.path}", e)
-                        }
+            if (model == null) {
+                Log.w("CollectViewModel", "No model found for summary: ${_summaryModelName.value}")
+                throw IllegalStateException("请先选择摘要模型")
+            }
+            val provider = _providerFlow.value.firstOrNull { it.id == model.providerId }?.name
+            provider?.let { provider ->
+                mainController.scope.launch(Dispatchers.IO) {
+                    try {
+                        api.getProvider(provider)?.handleSummary(
+                            model = model.modelId,
+                            content = item.transcript,
+                            onFinish = { summary ->
+                                Log.d("CollectViewModel", "Summary for ${item.path}: $summary")
+                                recordingRepo.updateRecording(
+                                    item.copy(title = summary)
+                                )
+                            },
+                        )
+                    } catch (e: Exception) {
+                        Log.e("CollectViewModel", "Error summarizing recording ${item.path}", e)
                     }
                 }
             }

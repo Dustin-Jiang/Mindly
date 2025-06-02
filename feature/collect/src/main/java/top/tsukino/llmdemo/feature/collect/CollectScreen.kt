@@ -1,5 +1,6 @@
 package top.tsukino.llmdemo.feature.collect
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -142,6 +143,36 @@ fun CollectScreen(
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 message = "正在转录语音"
+                            )
+                        }
+                    }
+                    vm.showRecordingManageSheet(null)
+                },
+                onSummary = { id ->
+                    try {
+                        vm.recordingSummary(id)
+                    }
+                    catch (e: IllegalStateException) {
+                        mainController.scope.launch {
+                            mainController.snackbarHostState.showSnackbar(
+                                message = "${e.message}"
+                            )
+                        }
+                        return@RecordingItemManageSheet
+                    }
+                    catch (e: Exception) {
+                        mainController.scope.launch {
+                            mainController.snackbarHostState.showSnackbar(
+                                message = "生成总结标题失败: ${e.message}"
+                            )
+                        }
+                        Log.e("CollectScreen", "Error summarizing recording", e)
+                        return@RecordingItemManageSheet
+                    }
+                    mainController.apply {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "正在生成总结标题"
                             )
                         }
                     }
