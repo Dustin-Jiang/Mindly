@@ -62,6 +62,16 @@ class CollectViewModel @Inject constructor(
                 _sttModelName.value = modelName
             }
         }
+        viewModelScope.launch(Dispatchers.IO) {
+            preferences.taskModelId.flow.collect { modelName ->
+                _summaryModelName.value = modelName
+            }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            preferences.enableSummaryTitle.flow.collect { enable ->
+                _enableSummaryTitle.value = enable
+            }
+        }
     }
 
     internal fun startRecording() {
@@ -103,6 +113,8 @@ class CollectViewModel @Inject constructor(
     private val _providerFlow = MutableStateFlow<List<ProviderEntity>>(emptyList())
     private val _modelFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
     private val _sttModelName = MutableStateFlow<String?>(null)
+    private val _summaryModelName = MutableStateFlow<String?>(null)
+    private val _enableSummaryTitle = MutableStateFlow(false)
 
     internal fun transcriptRecording(id: Long) {
         val item = _recordingList.value.find { it.id == id }
@@ -122,8 +134,47 @@ class CollectViewModel @Inject constructor(
                             recordingRepo.updateRecording(
                                 item.copy(transcript = transcript?.text ?: "")
                             )
+                            if (_enableSummaryTitle.value && transcript?.text?.isNotEmpty() == true) {
+                                recordingSummary(item.id)
+                            }
                         } catch (e: Exception) {
                             Log.e("CollectViewModel", "Error transcribing recording ${item.path}", e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    internal fun recordingSummary(id: Long) {
+        if (!_enableSummaryTitle.value) {
+            Log.w("CollectViewModel", "Summary title generation is disabled")
+            return
+        }
+        val item = _recordingList.value.find { it.id == id }
+        item?.let { item ->
+            if (item.transcript.isEmpty()) {
+                Log.w("CollectViewModel", "Cannot summarize recording ${item.path} without transcript")
+                return
+            }
+            val model = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
+            model?.let { model ->
+                val provider = _providerFlow.value.firstOrNull { it.id == model.providerId }?.name
+                provider?.let { provider ->
+                    mainController.scope.launch(Dispatchers.IO) {
+                        try {
+                            api.getProvider(provider)?.handleSummary(
+                                model = model.modelId,
+                                content = item.transcript,
+                                onFinish = { summary ->
+                                    Log.d("CollectViewModel", "Summary for ${item.path}: $summary")
+                                    recordingRepo.updateRecording(
+                                        item.copy(title = summary)
+                                    )
+                                },
+                            )
+                        } catch (e: Exception) {
+                            Log.e("CollectViewModel", "Error summarizing recording ${item.path}", e)
                         }
                     }
                 }
