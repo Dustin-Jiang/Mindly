@@ -27,7 +27,7 @@ fun SheetItem(
                 enabled = true,
                 onClick = onClick
             )
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         icon?.let { icon ->
             Icon(

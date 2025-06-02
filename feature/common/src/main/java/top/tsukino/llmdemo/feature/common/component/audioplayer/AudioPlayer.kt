@@ -83,9 +83,9 @@ fun AudioPlayer(
 
     // Use Card for a Material You container with elevation and shape
     Card(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier,
         shape = MaterialTheme.shapes.medium, // Use a standard Material shape
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp) // Add elevation
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Add elevation
     ) {
         Column(
             modifier = Modifier

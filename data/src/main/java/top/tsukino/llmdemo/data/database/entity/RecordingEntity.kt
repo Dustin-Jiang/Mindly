@@ -16,5 +16,5 @@ data class RecordingEntity(
     val duration: Long,
     val timestamp: Date,
 
-    val manuscript: String = "",
+    val transcript: String = "",
 )

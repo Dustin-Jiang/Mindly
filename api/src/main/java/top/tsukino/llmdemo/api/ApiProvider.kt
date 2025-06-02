@@ -1,10 +1,13 @@
 package top.tsukino.llmdemo.api
 
 import android.util.Log
+import com.aallam.openai.api.audio.Transcription
+import com.aallam.openai.api.audio.TranscriptionRequest
 import com.aallam.openai.api.chat.ChatCompletionChunk
 import com.aallam.openai.api.chat.ChatCompletionRequest
 import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.core.Role
+import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.model.Model
 import com.aallam.openai.client.OpenAI
 import com.aallam.openai.client.OpenAIConfig
@@ -15,6 +18,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
+import kotlinx.io.RawSource
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import java.io.File
 
 class ApiProvider(
     config: OpenAIConfig
@@ -113,5 +120,32 @@ class ApiProvider(
                 onUpdate(content.joinToString(""))
             }
         }
+    }
+
+    suspend fun sendTranscript(
+        model: String,
+        file: File
+    ): Transcription {
+        val modelId = models.value.find { it.id.id == model }?.id
+            ?: throw IllegalArgumentException("Model not found: $model")
+
+        if (!file.exists() || !file.isFile) {
+            throw IllegalArgumentException("Invalid file path: ${file.absolutePath}")
+        }
+
+        Log.d("ApiProvider", "Sending transcript request to model: $model for file ${file.absolutePath}")
+        val transcriptRequest = TranscriptionRequest(
+            model = modelId,
+            audio = FileSource(file.name, file.toRawSource()),
+            prompt = "You are an experienced assistant, please help transcribing this audio into precise text.",
+        )
+
+        val completions = client.transcription(request = transcriptRequest)
+        return completions
+    }
+    
+    internal fun File.toRawSource(): RawSource {
+        val path = Path(this.absolutePath)
+        return SystemFileSystem.source(path)
     }
 }

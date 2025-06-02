@@ -5,9 +5,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -30,6 +33,7 @@ import java.util.Date
 
 class RecordingItem(
     val data: RecordingEntity,
+    override val id: ItemId,
     override val timestamp: Long = data.timestamp.time,
 
     private val show: Boolean,
@@ -83,14 +87,39 @@ class RecordingItem(
             }
 
             AnimatedVisibility(show) {
-                AudioPlayer(
-                    state = playerState,
-                    onPlayClick = onPlayClick,
-                    onPauseClick = onPauseClick,
-                    onSeek = onSeek,
-                    onSeekForward = onSeekForward,
-                    onSeekBackward = onSeekBackward,
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AudioPlayer(
+                        state = playerState,
+                        onPlayClick = onPlayClick,
+                        onPauseClick = onPauseClick,
+                        onSeek = onSeek,
+                        onSeekForward = onSeekForward,
+                        onSeekBackward = onSeekBackward,
+                    )
+                    AnimatedVisibility(data.transcript.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            onClick = {},
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Add elevation
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                            ) {
+                                Text(
+                                    text = data.transcript,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -109,4 +138,8 @@ class RecordingItem(
             append(String.format("%02d", seconds))
         }
     }
+}
+
+fun RecordingEntity.toItemId(): ItemId {
+    return ItemId("recording-item-${this.id}")
 }

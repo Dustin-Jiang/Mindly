@@ -20,8 +20,10 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.feature.collect.items.CollectItem
 import top.tsukino.llmdemo.feature.collect.items.RecordingItem
+import top.tsukino.llmdemo.feature.collect.items.toItemId
 import top.tsukino.llmdemo.feature.collect.items.RecordingItemManageSheet
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerViewModel
 
@@ -34,6 +36,7 @@ fun CollectScreen(
     vm: CollectViewModel = hiltViewModel(),
     playerVm: AudioPlayerViewModel = hiltViewModel(),
 ) {
+    vm.mainController = mainController
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState()
     )
@@ -48,16 +51,17 @@ fun CollectScreen(
             list.addAll(recordingList.value.map { item ->
                 RecordingItem(
                     data = item,
-                    show = currentShowing == "${item.id}",
+                    id = item.toItemId(),
+                    show = currentShowing == item.toItemId(),
                     playerState = playerState,
                     onShow = { path ->
                         playerVm.reset()
-                        if (currentShowing == "${item.id}") {
+                        if (currentShowing == item.toItemId()) {
                             vm.clearCurrentShowing()
                         }
                         else {
                             playerVm.setAudioFile(path)
-                            vm.setCurrentShowing("${item.id}")
+                            vm.setCurrentShowing(item.toItemId())
                         }
                     },
                     onShowManageSheet = {
@@ -130,6 +134,17 @@ fun CollectScreen(
                 onDismiss = { vm.showRecordingManageSheet(null) },
                 onDelete = { id ->
                     vm.deleteRecording(id)
+                    vm.showRecordingManageSheet(null)
+                },
+                onTranscript = { id ->
+                    vm.transcriptRecording(id)
+                    mainController.apply {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "正在转录语音"
+                            )
+                        }
+                    }
                     vm.showRecordingManageSheet(null)
                 }
             )
