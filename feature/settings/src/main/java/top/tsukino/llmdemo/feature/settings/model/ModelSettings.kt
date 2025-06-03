@@ -1,23 +1,10 @@
 package top.tsukino.llmdemo.feature.settings.model
 
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.feature.settings.SettingsLabel
-import top.tsukino.llmdemo.feature.settings.SettingsSwitch
 import top.tsukino.llmdemo.feature.settings.SettingsViewModel
 
 fun LazyListScope.ModelSettings(
@@ -67,9 +54,7 @@ fun LazyListScope.ModelSettings(
         )
     }
 
-    if (vm.taskModelName.value.isNotEmpty()) {
-        TaskModelSettings (
-            vm = vm
-        )
-    }
+    UserExperience (
+        vm = vm
+    )
 }

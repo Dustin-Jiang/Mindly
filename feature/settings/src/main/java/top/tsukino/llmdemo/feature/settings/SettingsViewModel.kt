@@ -86,6 +86,8 @@ class SettingsViewModel @Inject constructor (
 
     private val _enableSummaryTitle = MutableStateFlow<Boolean>(false)
     val enableSummaryTitle = _enableSummaryTitle.asStateFlow()
+    private val _immediateTranscript = MutableStateFlow<Boolean>(false)
+    val immediateTranscript = _immediateTranscript.asStateFlow()
     private val _taskModelName = MutableStateFlow<String>("")
     val taskModelName = _taskModelName.asStateFlow()
     private val _defaultModelName = MutableStateFlow<String>("")
@@ -99,6 +101,11 @@ class SettingsViewModel @Inject constructor (
                 launch(Dispatchers.IO) {
                     preferences.enableSummaryTitle.flow.collect { enable ->
                         _enableSummaryTitle.value = enable
+                    }
+                }
+                launch(Dispatchers.IO) {
+                    preferences.immediateTranscript.flow.collect { enable ->
+                        _immediateTranscript.value = enable
                     }
                 }
                 launch(Dispatchers.IO) {
@@ -124,6 +131,14 @@ class SettingsViewModel @Inject constructor (
         withScope {
             viewModelScope.launch(Dispatchers.IO) {
                 preferences.enableSummaryTitle.set(enable)
+            }
+        }
+    }
+
+    internal fun updateImmediateTranscript(enable: Boolean) {
+        withScope {
+            viewModelScope.launch(Dispatchers.IO) {
+                preferences.immediateTranscript.set(enable)
             }
         }
     }

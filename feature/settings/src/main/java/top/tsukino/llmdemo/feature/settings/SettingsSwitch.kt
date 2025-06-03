@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SettingsSwitch(
-    vm: SettingsViewModel,
     title: String,
     checked: Boolean,
+    disabled: Boolean = false,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     Row() {
@@ -43,6 +43,7 @@ fun SettingsSwitch(
                         horizontal = 16.dp
                     ),
                 checked = checked,
+                enabled = !disabled,
                 onCheckedChange = onCheckedChange
             )
         }

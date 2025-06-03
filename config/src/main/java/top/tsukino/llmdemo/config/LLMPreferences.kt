@@ -13,6 +13,9 @@ class LLMPreferences(context: Context) {
     private val ENABLE_SUMMARY_TITLE_KEY = booleanPreferencesKey("enable_summary_title")
     val enableSummaryTitle = PreferencesDataStoreItem<Boolean>(ENABLE_SUMMARY_TITLE_KEY, false, store)
 
+    private val IMMEDIATE_TRANSCRIPT_KEY = booleanPreferencesKey("immediate_transcript")
+    val immediateTranscript = PreferencesDataStoreItem<Boolean>(IMMEDIATE_TRANSCRIPT_KEY, false, store)
+
     private val TASK_MODEL_ID = stringPreferencesKey("task_model_id")
     val taskModelId = PreferencesDataStoreItem<String>(TASK_MODEL_ID, "", store)
 
