@@ -1,12 +1,22 @@
 package top.tsukino.llmdemo.feature.sharereceiver
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.ShuffleOn
+import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,48 +36,63 @@ class TextContents(
 ): CollectionItemDisplay<CollectionTextEntity> {
     @Composable
     override fun Display() {
-        Card(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            elevation = CardDefaults.cardElevation(4.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
+            Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        vertical = 8.dp,
-                        horizontal = 16.dp
-                    )
+                    .fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Markdown(
-                    content = text,
-                    colors = markdownColor(
-                        text = MaterialTheme.colorScheme.onSurface
-                    ),
-                    typography = markdownTypography(
-                        h1 = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            vertical = 8.dp,
+                            horizontal = 16.dp
                         ),
-                        h2 = MaterialTheme.typography.headlineSmall,
-                        h3 = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Markdown(
+                        content = text,
+                        colors = markdownColor(
+                            text = MaterialTheme.colorScheme.onSurface
                         ),
-                        h4 = MaterialTheme.typography.titleLarge,
-                        h5 = MaterialTheme.typography.titleMedium,
-                        h6 = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold
+                        typography = markdownTypography(
+                            h1 = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            h2 = MaterialTheme.typography.headlineSmall,
+                            h3 = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            h4 = MaterialTheme.typography.titleLarge,
+                            h5 = MaterialTheme.typography.titleMedium,
+                            h6 = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
                         ),
-                    ),
-                    extendedSpans = markdownExtendedSpans {
-                        remember {
-                            ExtendedSpans(
-                                RoundedCornerSpanPainter(),
-                            )
+                        extendedSpans = markdownExtendedSpans {
+                            remember {
+                                ExtendedSpans(
+                                    RoundedCornerSpanPainter(),
+                                )
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
+            OutlinedTextField(
+                value = title,
+                onValueChange = { text ->
+                    title = text
+                },
+                label = { Text("编辑标题") },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 

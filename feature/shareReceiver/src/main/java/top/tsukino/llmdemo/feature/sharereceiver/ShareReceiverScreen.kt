@@ -62,7 +62,7 @@ fun ShareReceiverScreen(
     val item: CollectionItemDisplay<*>? = when {
         shareText != null -> {
             TextContents(
-                text = shareText,
+                text = shareText
             )
         }
 
