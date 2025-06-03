@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 
 @Dao
-interface RecodingDao {
+interface RecordingDao {
     @Insert
     suspend fun insertRecording(recording: RecordingEntity): Long
 

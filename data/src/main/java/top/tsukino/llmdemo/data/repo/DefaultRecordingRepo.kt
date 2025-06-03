@@ -4,7 +4,6 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import top.tsukino.llmdemo.data.database.LLMDemoDatabase
-import top.tsukino.llmdemo.data.database.dao.RecodingDao
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import top.tsukino.llmdemo.data.repo.base.RecordingRepo
 import java.io.File
