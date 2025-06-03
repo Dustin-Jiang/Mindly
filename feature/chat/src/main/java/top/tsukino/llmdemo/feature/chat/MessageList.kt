@@ -22,7 +22,8 @@ import top.tsukino.llmdemo.feature.common.MainController
 internal fun MessageList(
     mainController: MainController,
     conversation: ConversationWithMessages,
-    state: LazyListState
+    state: LazyListState,
+    onShowSheet: (Long) -> Unit,
 ) {
     LazyColumn(
         state = state,
@@ -34,7 +35,8 @@ internal fun MessageList(
         ) { item ->
             MessageContainer(
                 modifier = Modifier.animateItem(),
-                item = item
+                item = item,
+                onShowSheet = onShowSheet
             )
         }
     }
@@ -44,6 +46,7 @@ internal fun MessageList(
 internal fun MessageContainer(
     item: MessageEntity,
     modifier: Modifier = Modifier,
+    onShowSheet: (Long) -> Unit,
 ) {
     val bgColor = if (item.isUser) {
         MaterialTheme.colorScheme.primaryContainer
@@ -71,7 +74,10 @@ internal fun MessageContainer(
                 .widthIn(0.dp, 320.dp),
             color = bgColor
         ) {
-            MessageItem(item = item)
+            MessageItem(
+                item = item,
+                onShowSheet = onShowSheet,
+            )
         }
     }
 }

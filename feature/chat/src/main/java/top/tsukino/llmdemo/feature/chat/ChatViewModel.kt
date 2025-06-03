@@ -1,28 +1,24 @@
 package top.tsukino.llmdemo.feature.chat
 
 import android.util.Log
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aallam.openai.api.chat.ChatCompletionChunk
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.core.Role
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 import top.tsukino.llmdemo.api.LLMDemoApi
 import top.tsukino.llmdemo.config.LLMPreferences
 import top.tsukino.llmdemo.data.database.dto.ConversationWithMessages
+import top.tsukino.llmdemo.data.database.entity.CollectionTextEntity
 import top.tsukino.llmdemo.data.database.entity.MessageEntity
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.data.database.entity.ProviderEntity
 import top.tsukino.llmdemo.data.database.entity.toChatMessage
+import top.tsukino.llmdemo.data.repo.base.CollectionTextRepo
 import top.tsukino.llmdemo.data.repo.base.ConversationRepo
 import top.tsukino.llmdemo.data.repo.base.ModelRepo
 import top.tsukino.llmdemo.data.repo.base.ProviderRepo
@@ -35,6 +31,7 @@ class ChatViewModel @Inject constructor(
     private val conversationRepo: ConversationRepo,
     private val providerRepo: ProviderRepo,
     private val modelRepo: ModelRepo,
+    private val collectionTextRepo: CollectionTextRepo,
     private val api: LLMDemoApi,
     private val preferences: LLMPreferences,
 ): ViewModel() {
@@ -165,6 +162,15 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    internal fun deleteMessage(id: Long) {
+        val entity = _conversationState.value?.messages?.find { it.id == id }
+        entity?.let { entity ->
+            viewModelScope.launch(Dispatchers.IO) {
+                conversationRepo.deleteMessage(entity)
+            }
+        }
+    }
+
     internal suspend fun handleChat(lastUserMessage: MessageEntity, onUpdate: () -> Unit) {
         var replyMsg = MessageEntity(
             id = 0L,
@@ -229,6 +235,21 @@ class ChatViewModel @Inject constructor(
                         }
                     )
                 }
+            }
+        }
+    }
+
+    internal fun archiveMessage(id: Long) {
+        val entity = _conversationState.value?.messages?.find { it.id == id }
+        entity?.let { entity ->
+            val content = entity.text.trim(' ', '\n', '\r')
+            viewModelScope.launch(Dispatchers.IO) {
+                val item = CollectionTextEntity(
+                    title = content.take(20),
+                    content = content,
+                    timestamp = entity.timestamp
+                )
+                collectionTextRepo.insertCollectionText(item)
             }
         }
     }

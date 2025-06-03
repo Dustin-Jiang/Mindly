@@ -12,10 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.api.LLMDemoApi
 import top.tsukino.llmdemo.config.LLMPreferences
+import top.tsukino.llmdemo.data.database.entity.CollectionTextEntity
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.data.database.entity.ProviderEntity
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import top.tsukino.llmdemo.data.recorder.AudioRecorder
+import top.tsukino.llmdemo.data.repo.base.CollectionTextRepo
 import top.tsukino.llmdemo.data.repo.base.ModelRepo
 import top.tsukino.llmdemo.data.repo.base.ProviderRepo
 import top.tsukino.llmdemo.data.repo.base.RecordingRepo
@@ -29,6 +31,7 @@ import javax.inject.Inject
 class CollectViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val recordingRepo: RecordingRepo,
+    private val collectionTextRepo: CollectionTextRepo,
     private val providerRepo: ProviderRepo,
     private val modelRepo: ModelRepo,
     private val api: LLMDemoApi,
@@ -39,6 +42,9 @@ class CollectViewModel @Inject constructor(
 
     private val _recordingList = MutableStateFlow<List<RecordingEntity>>(emptyList())
     val recordingList = _recordingList.asStateFlow()
+
+    private val _collectionTextList = MutableStateFlow<List<CollectionTextEntity>>(emptyList())
+    val collectionTextList = _collectionTextList.asStateFlow()
 
     private val _currentShowing = MutableStateFlow<ItemId?>(null)
     val currentShowing = _currentShowing.asStateFlow()
@@ -53,6 +59,9 @@ class CollectViewModel @Inject constructor(
     init {
         viewModelScope.launch(Dispatchers.IO) {
             recordingRepo.getRecordingList().collect(_recordingList::emit)
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            collectionTextRepo.getCollectionTextList().collect(_collectionTextList::emit)
         }
         viewModelScope.launch(Dispatchers.IO) {
             providerRepo.getProviders().collect { providers ->
@@ -140,6 +149,13 @@ class CollectViewModel @Inject constructor(
         _showRecordingManageSheet.value = id
     }
 
+    val _showTextManageSheet = MutableStateFlow<Long?>(null)
+    val showTextManageSheet = _showTextManageSheet.asStateFlow()
+
+    internal fun showTextManageSheet(id: Long?) {
+        _showTextManageSheet.value = id
+    }
+
     internal fun deleteRecording(id: Long) {
         val item = _recordingList.value.find { it.id == id }
         item?.let {
@@ -148,6 +164,16 @@ class CollectViewModel @Inject constructor(
             }
         }
         _showRecordingManageSheet.value = null
+    }
+
+    internal fun deleteTextItem(id: Long) {
+        val item = _collectionTextList.value.find { it.id == id }
+        item?.let {
+            viewModelScope.launch(Dispatchers.IO) {
+                collectionTextRepo.deleteCollectionText(it)
+            }
+        }
+        _showTextManageSheet.value = null
     }
 
     internal fun transcriptRecording(id: Long) {
@@ -193,28 +219,61 @@ class CollectViewModel @Inject constructor(
                 Log.w("CollectViewModel", "Cannot summarize recording ${recordingItem.path} without transcript")
                 return transcriptRecording(id)
             }
-            val summaryModel = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
-            if (summaryModel == null) {
-                Log.w("CollectViewModel", "No model found for summary: ${_summaryModelName.value}")
-                throw IllegalStateException("请先选择摘要模型")
+            handleSummary(
+                content = recordingItem.transcript,
+                onFinish = { summary ->
+                    Log.d("CollectViewModel", "Summary for ${recordingItem.path}: $summary")
+                    recordingRepo.updateRecording(
+                        recordingItem.copy(title = summary)
+                    )
+                }
+            )
+        }
+    }
+
+    internal fun textSummary(id: Long) {
+        if (!_enableSummaryTitle.value) {
+            Log.w("CollectViewModel", "Summary title generation is disabled")
+            throw IllegalStateException("请先启用摘要标题生成")
+        }
+        val item = _collectionTextList.value.find { it.id == id }
+        item?.let { item ->
+            if (item.content.isEmpty()) {
+                Log.w("CollectViewModel", "Cannot summarize ${item.id}")
+                return
             }
-            val providerName = _providerFlow.value.firstOrNull { it.id == summaryModel.providerId }?.name
-            providerName?.let { providerName ->
-                mainController.scope.launch(Dispatchers.IO) {
-                    try {
-                        api.getProvider(providerName)?.handleSummary(
-                            model = summaryModel.modelId,
-                            content = recordingItem.transcript,
-                            onFinish = { summary ->
-                                Log.d("CollectViewModel", "Summary for ${recordingItem.path}: $summary")
-                                recordingRepo.updateRecording(
-                                    recordingItem.copy(title = summary)
-                                )
-                            },
-                        )
-                    } catch (e: Exception) {
-                        Log.e("CollectViewModel", "Error summarizing recording ${recordingItem.path}", e)
-                    }
+            handleSummary(
+                content = item.content,
+                onFinish = { summary ->
+                    Log.d("CollectViewModel", "Summary for ${item.id}: $summary")
+                    collectionTextRepo.updateCollectionText(
+                        item.copy(title = summary)
+                    )
+                }
+            )
+        }
+    }
+
+    internal fun handleSummary(
+        content: String,
+        onFinish: suspend (String) -> Unit
+    ) {
+        val summaryModel = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
+        if (summaryModel == null) {
+            Log.w("CollectViewModel", "No model found for summary: ${_summaryModelName.value}")
+            throw IllegalStateException("请先选择摘要模型")
+        }
+        val providerName = _providerFlow.value.firstOrNull { it.id == summaryModel.providerId }?.name
+        providerName?.let { providerName ->
+            mainController.scope.launch(Dispatchers.IO) {
+                try {
+                    api.getProvider(providerName)?.handleSummary(
+                        model = summaryModel.modelId,
+                        content = content,
+                        onFinish = onFinish,
+                    )
+                } catch (e: Exception) {
+                    Log.e("CollectViewModel", "Error summarizing ${content}", e)
                 }
             }
         }

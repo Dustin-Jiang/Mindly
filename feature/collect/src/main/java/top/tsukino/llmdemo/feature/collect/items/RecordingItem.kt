@@ -40,7 +40,7 @@ class RecordingItem(
 
     private val playerState: AudioPlayerState,
 
-    private val onShow: (path: String) -> Unit,
+    private val onShow: () -> Unit,
     private val onShowManageSheet: (Long) -> Unit,
 
     private val onPlayClick: () -> Unit,
@@ -59,7 +59,7 @@ class RecordingItem(
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = {
-                        onShow(data.path)
+                        onShow()
                     },
                     onLongClick = {
                         onShowManageSheet(data.id)
@@ -70,52 +70,54 @@ class RecordingItem(
                 modifier = Modifier.padding(
                     horizontal = 16.dp,
                     vertical = 8.dp
-                )
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = data.title,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = data.duration.toDuration(),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = DateTimeUtils.formatReadableTime(data.timestamp) ?: "",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            AnimatedVisibility(show) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    AudioPlayer(
-                        state = playerState,
-                        onPlayClick = onPlayClick,
-                        onPauseClick = onPauseClick,
-                        onSeek = onSeek,
-                        onSeekForward = onSeekForward,
-                        onSeekBackward = onSeekBackward,
+                Column {
+                    Text(
+                        text = data.title,
+                        style = MaterialTheme.typography.titleMedium
                     )
-                    AnimatedVisibility(data.transcript.isNotEmpty()) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            onClick = {},
-                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Add elevation
-                        ) {
-                            Column(
+                    Text(
+                        text = data.duration.toDuration(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = DateTimeUtils.formatReadableTime(data.timestamp) ?: "",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                AnimatedVisibility(show) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        AudioPlayer(
+                            state = playerState,
+                            onPlayClick = onPlayClick,
+                            onPauseClick = onPauseClick,
+                            onSeek = onSeek,
+                            onSeekForward = onSeekForward,
+                            onSeekBackward = onSeekBackward,
+                        )
+                        AnimatedVisibility(data.transcript.isNotEmpty()) {
+                            Card(
                                 modifier = Modifier
-                                    .padding(vertical = 8.dp, horizontal = 16.dp),
+                                    .fillMaxWidth(),
+                                onClick = {},
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Add elevation
                             ) {
-                                Text(
-                                    text = data.transcript,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .padding(vertical = 8.dp, horizontal = 16.dp),
+                                ) {
+                                    Text(
+                                        text = data.transcript,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
                             }
                         }
                     }

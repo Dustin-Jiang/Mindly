@@ -16,18 +16,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.component.TitleBar
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.feature.collect.items.CollectItem
 import top.tsukino.llmdemo.feature.collect.items.RecordingItem
 import top.tsukino.llmdemo.feature.collect.items.toItemId
 import top.tsukino.llmdemo.feature.collect.items.RecordingItemManageSheet
+import top.tsukino.llmdemo.feature.collect.items.TextItem
+import top.tsukino.llmdemo.feature.collect.items.TextItemManageSheet
 import top.tsukino.llmdemo.feature.common.component.ResultType
 import top.tsukino.llmdemo.feature.common.component.ResultView
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerViewModel
@@ -45,8 +49,15 @@ fun CollectScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         rememberTopAppBarState()
     )
+    val listState = rememberLazyListState()
+    val expanded by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 || listState.firstVisibleItemScrollOffset < 0
+        }
+    }
 
     val recordingList = vm.recordingList.collectAsState()
+    val collectionTextList = vm.collectionTextList.collectAsState()
     val playerState by playerVm.playerState.collectAsState()
     val currentShowing by vm.currentShowing.collectAsState()
 
@@ -59,13 +70,13 @@ fun CollectScreen(
                     id = item.toItemId(),
                     show = currentShowing == item.toItemId(),
                     playerState = playerState,
-                    onShow = { path ->
+                    onShow = {
                         playerVm.reset()
                         if (currentShowing == item.toItemId()) {
                             vm.clearCurrentShowing()
                         }
                         else {
-                            playerVm.setAudioFile(path)
+                            playerVm.setAudioFile(item.path)
                             vm.setCurrentShowing(item.toItemId())
                         }
                     },
@@ -80,12 +91,33 @@ fun CollectScreen(
                 )
             })
 
+            list.addAll(collectionTextList.value.map { item ->
+                TextItem(
+                    data = item,
+                    title = item.title,
+                    show = currentShowing == item.toItemId(),
+                    onShow = {
+                        if (currentShowing == item.toItemId()) {
+                            vm.clearCurrentShowing()
+                        }
+                        else {
+                            vm.setCurrentShowing(item.toItemId())
+                        }
+                    },
+                    onShowSheet = {
+                        vm.showTextManageSheet(item.id)
+                    },
+                    id = item.toItemId()
+                )
+            })
+
             list.sortByDescending { it.timestamp }
             list
         }
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TitleBar(
                 title = "收藏",
@@ -193,6 +225,44 @@ fun CollectScreen(
                         }
                     }
                     vm.showRecordingManageSheet(null)
+                }
+            )
+        }
+        vm.showTextManageSheet.collectAsState().value != null -> {
+            TextItemManageSheet(
+                id = vm.showTextManageSheet.collectAsState().value ?: 0L,
+                onDismiss = { vm.showTextManageSheet(null) },
+                onDelete = { id ->
+                    vm.deleteTextItem(id)
+                },
+                onSummary = { id ->
+                    try {
+                        vm.textSummary(id)
+                    }
+                    catch (e: IllegalStateException) {
+                        mainController.scope.launch {
+                            mainController.snackbarHostState.showSnackbar(
+                                message = "${e.message}"
+                            )
+                        }
+                        return@TextItemManageSheet
+                    }
+                    catch (e: Exception) {
+                        mainController.scope.launch {
+                            mainController.snackbarHostState.showSnackbar(
+                                message = "生成总结标题失败: ${e.message}"
+                            )
+                        }
+                        Log.e("CollectScreen", "Error summarizing text", e)
+                        return@TextItemManageSheet
+                    }
+                    mainController.apply {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "正在生成总结标题"
+                            )
+                        }
+                    }
                 }
             )
         }

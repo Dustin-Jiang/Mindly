@@ -42,6 +42,8 @@ fun ChatScreen(
     val scrollScope = rememberCoroutineScope()
     val lazyColumnState = rememberLazyListState()
 
+    val showMessageSheet = remember { mutableStateOf<Long>(0L) }
+
     LaunchedEffect(conversationId) {
         vm.load(conversationId)
     }
@@ -96,9 +98,23 @@ fun ChatScreen(
                 MessageList(
                     mainController,
                     conversation = it,
-                    state = lazyColumnState
+                    state = lazyColumnState,
+                    onShowSheet = {
+                        showMessageSheet.value = it
+                    }
                 )
             }
+        }
+    }
+
+    when {
+        showMessageSheet.value != 0L -> {
+            MessageSheet(
+                id = showMessageSheet.value,
+                onDismiss = { showMessageSheet.value = 0L },
+                onDelete = { vm.deleteMessage(id = it) },
+                onArchive = { vm.archiveMessage(id = it) },
+            )
         }
     }
 }
