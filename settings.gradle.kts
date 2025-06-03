@@ -63,3 +63,6 @@ include(
 include(
     ":feature:collect"
 )
+include(
+    ":feature:shareReceiver"
+)

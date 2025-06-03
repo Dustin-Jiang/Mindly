@@ -66,6 +66,7 @@ dependencies {
     implementation(project(":feature:chat"))
     implementation(project(":feature:collect"))
     implementation(project(":feature:settings"))
+    implementation(project(":feature:shareReceiver"))
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
