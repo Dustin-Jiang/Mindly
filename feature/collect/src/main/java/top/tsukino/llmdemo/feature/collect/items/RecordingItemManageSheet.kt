@@ -25,7 +25,9 @@ internal fun RecordingItemManageSheet(
     id: Long,
     onDismiss: () -> Unit,
     onDelete: (Long) -> Unit,
+    isTranscriptEnabled: Boolean,
     onTranscript: (Long) -> Unit,
+    isSummaryTitleEnabled: Boolean,
     onSummary: (Long) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -43,19 +45,22 @@ internal fun RecordingItemManageSheet(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
             SheetItem(
-                text = { Text("删除") },
-                icon = Icons.Default.Delete,
-                onClick = { onDelete(id) }
-            )
-            SheetItem(
                 text = { Text("转录为文本") },
                 icon = Icons.Filled.RecordVoiceOver,
+                disabled = !isTranscriptEnabled,
                 onClick = { onTranscript(id) }
             )
             SheetItem(
                 text = { Text("生成总结标题") },
                 icon = Icons.Filled.Title,
+                disabled = !isSummaryTitleEnabled,
                 onClick = { onSummary(id) }
+            )
+            SheetItem(
+                text = { Text("删除") },
+                icon = Icons.Default.Delete,
+                warning = true,
+                onClick = { onDelete(id) }
             )
         }
     }

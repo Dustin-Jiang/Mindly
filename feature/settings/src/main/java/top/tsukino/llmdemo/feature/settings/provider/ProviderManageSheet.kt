@@ -43,6 +43,7 @@ fun ProviderManageSheet(
             SheetItem(
                 text = { Text("删除模型提供商") },
                 icon = Icons.Default.Delete,
+                warning = true,
                 onClick = {
                     onDelete(provider)
                     onDismiss()

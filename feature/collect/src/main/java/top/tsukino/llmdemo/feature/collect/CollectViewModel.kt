@@ -2,6 +2,7 @@ package top.tsukino.llmdemo.feature.collect
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,9 +53,18 @@ class CollectViewModel @Inject constructor(
     private val _providerFlow = MutableStateFlow<List<ProviderEntity>>(emptyList())
     private val _modelFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
     private val _sttModelName = MutableStateFlow<String?>(null)
-    private val _summaryModelName = MutableStateFlow<String?>(null)
-    private val _enableSummaryTitle = MutableStateFlow(false)
     private val _immediateTranscript = MutableStateFlow(false)
+    private val _enableAutoSummaryTitle = MutableStateFlow(false)
+    private val _summaryModelName = MutableStateFlow<String?>(null)
+
+    val enableTranscript = derivedStateOf {
+        val sttModel = _modelFlow.value.firstOrNull { _sttModelName.value == it.modelId }
+        sttModel != null;
+    }
+    val enableSummaryTitle = derivedStateOf {
+        val summaryModel = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
+        summaryModel != null;
+    }
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -85,7 +95,7 @@ class CollectViewModel @Inject constructor(
         }
         viewModelScope.launch(Dispatchers.IO) {
             preferences.enableSummaryTitle.flow.collect { enable ->
-                _enableSummaryTitle.value = enable
+                _enableAutoSummaryTitle.value = enable
             }
         }
         viewModelScope.launch(Dispatchers.IO) {
@@ -197,7 +207,7 @@ class CollectViewModel @Inject constructor(
                         recordingRepo.updateRecording(
                             item.copy(transcript = transcript?.text ?: "")
                         )
-                        if (_enableSummaryTitle.value && transcript?.text?.isNotEmpty() == true) {
+                        if (_enableAutoSummaryTitle.value && transcript?.text?.isNotEmpty() == true) {
                             recordingSummary(item.id)
                         }
                     } catch (e: Exception) {
@@ -209,7 +219,7 @@ class CollectViewModel @Inject constructor(
     }
 
     internal fun recordingSummary(id: Long) {
-        if (!_enableSummaryTitle.value) {
+        if (!_enableAutoSummaryTitle.value) {
             Log.w("CollectViewModel", "Summary title generation is disabled")
             throw IllegalStateException("请先启用摘要标题生成")
         }
@@ -232,7 +242,7 @@ class CollectViewModel @Inject constructor(
     }
 
     internal fun textSummary(id: Long) {
-        if (!_enableSummaryTitle.value) {
+        if (!_enableAutoSummaryTitle.value) {
             Log.w("CollectViewModel", "Summary title generation is disabled")
             throw IllegalStateException("请先启用摘要标题生成")
         }

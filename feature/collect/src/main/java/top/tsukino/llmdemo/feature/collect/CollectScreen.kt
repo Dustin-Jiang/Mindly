@@ -176,6 +176,9 @@ fun CollectScreen(
         }
     }
 
+    val enableTranscript by vm.enableTranscript
+    val enableSummaryTitle by vm.enableSummaryTitle
+
     when {
         vm.showRecordingManageSheet.collectAsState().value != null -> {
             RecordingItemManageSheet(
@@ -185,6 +188,7 @@ fun CollectScreen(
                     vm.deleteRecording(id)
                     vm.showRecordingManageSheet(null)
                 },
+                isTranscriptEnabled = enableTranscript,
                 onTranscript = { id ->
                     vm.transcriptRecording(id)
                     mainController.apply {
@@ -196,6 +200,7 @@ fun CollectScreen(
                     }
                     vm.showRecordingManageSheet(null)
                 },
+                isSummaryTitleEnabled = enableSummaryTitle,
                 onSummary = { id ->
                     try {
                         vm.recordingSummary(id)
@@ -235,6 +240,7 @@ fun CollectScreen(
                 onDelete = { id ->
                     vm.deleteTextItem(id)
                 },
+                isSummaryTitleEnabled = enableSummaryTitle,
                 onSummary = { id ->
                     try {
                         vm.textSummary(id)

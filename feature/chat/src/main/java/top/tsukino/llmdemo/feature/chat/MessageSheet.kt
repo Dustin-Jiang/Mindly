@@ -40,6 +40,7 @@ fun MessageSheet(
             SheetItem(
                 text = { Text("删除") },
                 icon = Icons.Default.Delete,
+                warning = true,
                 onClick = {
                     onDelete(id)
                     onDismiss()
