@@ -129,7 +129,6 @@ class CollectViewModel @Inject constructor(
                     val id = recordingRepo.insertRecording(recording)
                     if (_immediateTranscript.value) {
                         Log.d("CollectViewModel", "Immediate transcription enabled, transcribing recording")
-
                         transcriptRecording(id)
                     }
                 }
@@ -185,33 +184,35 @@ class CollectViewModel @Inject constructor(
         }
         _showTextManageSheet.value = null
     }
-
+    
     internal fun transcriptRecording(id: Long) {
-        val item = _recordingList.value.find { it.id == id }
-        if (item == null) {
-            Log.w("CollectViewModel", "No recording found with id: $id")
-            return
-        }
-        setCurrentShowing(item.toItemId())
-        val sttModel = _modelFlow.value.firstOrNull { _sttModelName.value == it.modelId }
-        sttModel?.let { selectedModel ->
-            val providerName = _providerFlow.value.firstOrNull { it.id == selectedModel.providerId }?.name
-            providerName?.let { providerName ->
-                mainController.scope.launch(Dispatchers.IO) {
-                    try {
-                        val transcript = api.getProvider(providerName)?.sendTranscript(
-                            model = selectedModel.modelId,
-                            file = File(context.getExternalFilesDir(null), item.path)
-                        )
-                        Log.d("CollectViewModel", "Transcript for ${item.path}: ${transcript?.text}")
-                        recordingRepo.updateRecording(
-                            item.copy(transcript = transcript?.text ?: "")
-                        )
-                        if (_enableAutoSummaryTitle.value && transcript?.text?.isNotEmpty() == true) {
-                            recordingSummary(item.id)
+        viewModelScope.launch(Dispatchers.IO) {
+            val item = recordingRepo.getRecording(id)
+            if (item == null) {
+                Log.w("CollectViewModel", "No recording found with id: $id")
+                return@launch
+            }
+            setCurrentShowing(item.toItemId())
+            val sttModel = _modelFlow.value.firstOrNull { _sttModelName.value == it.modelId }
+            sttModel?.let { selectedModel ->
+                val providerName = _providerFlow.value.firstOrNull { it.id == selectedModel.providerId }?.name
+                providerName?.let { providerName ->
+                    mainController.scope.launch(Dispatchers.IO) {
+                        try {
+                            val transcript = api.getProvider(providerName)?.sendTranscript(
+                                model = selectedModel.modelId,
+                                file = File(context.getExternalFilesDir(null), item.path)
+                            )
+                            Log.d("CollectViewModel", "Transcript for ${item.path}: ${transcript?.text}")
+                            recordingRepo.updateRecording(
+                                item.copy(transcript = transcript?.text ?: "")
+                            )
+                            if (_enableAutoSummaryTitle.value && transcript?.text?.isNotEmpty() == true) {
+                                recordingSummary(item.id)
+                            }
+                        } catch (e: Exception) {
+                            Log.e("CollectViewModel", "Error transcribing recording ${item.path}", e)
                         }
-                    } catch (e: Exception) {
-                        Log.e("CollectViewModel", "Error transcribing recording ${item.path}", e)
                     }
                 }
             }
@@ -219,9 +220,9 @@ class CollectViewModel @Inject constructor(
     }
 
     internal fun recordingSummary(id: Long) {
-        if (!_enableAutoSummaryTitle.value) {
-            Log.w("CollectViewModel", "Summary title generation is disabled")
-            throw IllegalStateException("请先启用摘要标题生成")
+        if (!enableSummaryTitle.value) {
+            Log.w("CollectViewModel", "No task model selected")
+            throw IllegalStateException("请先选择任务模型")
         }
         val item = _recordingList.value.find { it.id == id }
         item?.let { recordingItem ->
