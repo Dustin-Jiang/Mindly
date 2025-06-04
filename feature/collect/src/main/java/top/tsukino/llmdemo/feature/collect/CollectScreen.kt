@@ -263,6 +263,7 @@ fun CollectScreen(
                             )
                         }
                     }
+                    vm.showTextManageSheet(null)
                 }
             )
         }
