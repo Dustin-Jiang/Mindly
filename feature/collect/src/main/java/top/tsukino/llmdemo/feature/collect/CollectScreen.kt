@@ -238,6 +238,7 @@ fun CollectScreen(
                         vm.createConversation(text)
                         vm.showTextManageSheet(null)
                     }
+                    vm.showRecordingManageSheet(null)
                 },
                 onShareTranscript = { id ->
                     val recording = vm.recordingList.value.find { it.id == id }
@@ -292,6 +293,7 @@ fun CollectScreen(
                         vm.createConversation(text)
                         vm.showTextManageSheet(null)
                     }
+                    vm.showRecordingManageSheet(null)
                 },
                 onShare = { id ->
                     val text = vm.collectionTextList.value.find { it.id == id }
