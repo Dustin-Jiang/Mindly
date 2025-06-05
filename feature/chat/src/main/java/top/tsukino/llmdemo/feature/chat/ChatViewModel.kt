@@ -1,5 +1,7 @@
 package top.tsukino.llmdemo.feature.chat
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -169,6 +171,21 @@ class ChatViewModel @Inject constructor(
                 conversationRepo.deleteMessage(entity)
             }
         }
+    }
+
+    internal fun shareMessage(
+        context: Context?,
+        id: Long
+    ) {
+        val entity = _conversationState.value?.messages?.find { it.id == id }
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, entity?.text)
+            type = "text/plain"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        context?.startActivity(shareIntent)
     }
 
     internal suspend fun handleChat(lastUserMessage: MessageEntity, onUpdate: () -> Unit) {

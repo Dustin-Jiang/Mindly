@@ -1,6 +1,7 @@
 package top.tsukino.llmdemo.feature.chat
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -43,6 +44,7 @@ fun ChatScreen(
     val lazyColumnState = rememberLazyListState()
 
     val showMessageSheet = remember { mutableStateOf<Long>(0L) }
+    val activity = LocalActivity.current
 
     LaunchedEffect(conversationId) {
         vm.load(conversationId)
@@ -113,6 +115,7 @@ fun ChatScreen(
                 id = showMessageSheet.value,
                 onDismiss = { showMessageSheet.value = 0L },
                 onDelete = { vm.deleteMessage(id = it) },
+                onShare = { vm.shareMessage(context = activity, id = it) },
                 onArchive = { vm.archiveMessage(id = it) },
             )
         }

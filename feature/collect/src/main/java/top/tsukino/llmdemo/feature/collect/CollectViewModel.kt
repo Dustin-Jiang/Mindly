@@ -1,7 +1,9 @@
 package top.tsukino.llmdemo.feature.collect
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,18 +16,22 @@ import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.api.LLMDemoApi
 import top.tsukino.llmdemo.config.LLMPreferences
 import top.tsukino.llmdemo.data.database.entity.CollectionTextEntity
+import top.tsukino.llmdemo.data.database.entity.MessageEntity
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.data.database.entity.ProviderEntity
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import top.tsukino.llmdemo.data.recorder.AudioRecorder
 import top.tsukino.llmdemo.data.repo.base.CollectionTextRepo
+import top.tsukino.llmdemo.data.repo.base.ConversationRepo
 import top.tsukino.llmdemo.data.repo.base.ModelRepo
 import top.tsukino.llmdemo.data.repo.base.ProviderRepo
 import top.tsukino.llmdemo.data.repo.base.RecordingRepo
 import top.tsukino.llmdemo.feature.collect.items.ItemId
 import top.tsukino.llmdemo.feature.collect.items.toItemId
 import top.tsukino.llmdemo.feature.common.MainController
+import top.tsukino.llmdemo.feature.common.NavDest
 import java.io.File
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,6 +41,7 @@ class CollectViewModel @Inject constructor(
     private val collectionTextRepo: CollectionTextRepo,
     private val providerRepo: ProviderRepo,
     private val modelRepo: ModelRepo,
+    private val conversationRepo: ConversationRepo,
     private val api: LLMDemoApi,
     private val preferences: LLMPreferences
 ) : ViewModel() {
@@ -287,6 +294,36 @@ class CollectViewModel @Inject constructor(
                     Log.e("CollectViewModel", "Error summarizing ${content}", e)
                 }
             }
+        }
+    }
+
+    internal fun shareText(
+        context: Context?,
+        content: String,
+    ) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, content)
+            type = "text/plain"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        context?.startActivity(shareIntent)
+    }
+
+    internal fun createConversation(
+        content: String,
+    ) {
+        mainController.scope.launch(Dispatchers.Main) {
+            val newId = conversationRepo.createConversation("新对话")
+            val message = MessageEntity(
+                conversationId = newId,
+                text = content,
+                isUser = true,
+                timestamp = Date(),
+            )
+            conversationRepo.addMessage(message)
+            mainController.navigate(NavDest.Chat(newId))
         }
     }
 }

@@ -1,6 +1,7 @@
 package top.tsukino.llmdemo.feature.collect
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +18,6 @@ import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.component.TitleBar
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -178,6 +178,7 @@ fun CollectScreen(
 
     val enableTranscript by vm.enableTranscript
     val enableSummaryTitle by vm.enableSummaryTitle
+    val activity = LocalActivity.current
 
     when {
         vm.showRecordingManageSheet.collectAsState().value != null -> {
@@ -230,6 +231,20 @@ fun CollectScreen(
                         }
                     }
                     vm.showRecordingManageSheet(null)
+                },
+                onCreateConversation = { id ->
+                    val recording = vm.recordingList.value.find { it.id == id }
+                    recording?.transcript?.let { text ->
+                        vm.createConversation(text)
+                        vm.showTextManageSheet(null)
+                    }
+                },
+                onShareTranscript = { id ->
+                    val recording = vm.recordingList.value.find { it.id == id }
+                    recording?.transcript?.let { text ->
+                        vm.shareText(activity, text)
+                        vm.showTextManageSheet(null)
+                    }
                 }
             )
         }
@@ -270,6 +285,20 @@ fun CollectScreen(
                         }
                     }
                     vm.showTextManageSheet(null)
+                },
+                onCreateConversation = { id ->
+                    val text = vm.collectionTextList.value.find { it.id == id }
+                    text?.content?.let { text ->
+                        vm.createConversation(text)
+                        vm.showTextManageSheet(null)
+                    }
+                },
+                onShare = { id ->
+                    val text = vm.collectionTextList.value.find { it.id == id }
+                    text?.content?.let { text ->
+                        vm.shareText(activity, text)
+                        vm.showTextManageSheet(null)
+                    }
                 }
             )
         }
