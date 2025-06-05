@@ -26,41 +26,41 @@ fun SheetIconItem(
     icon: ImageVector,
     onClick: () -> Unit,
 ) {
-    Surface(
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    Box(
         modifier = Modifier
-            .width(96.dp)
-            .height(96.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .clickable(
-                onClick = onClick,
-            )
+            .padding(4.dp),
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .padding(4.dp)
-                .fillMaxSize(),
+                .align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Column(
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.primaryContainer,
                 modifier = Modifier
-                    .align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .width(80.dp)
+                    .clip(MaterialTheme.shapes.extraLarge)
+                    .clickable(
+                        onClick = onClick,
+                    )
             ) {
                 Icon(
+                    modifier = Modifier
+                        .padding(8.dp),
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
             }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
