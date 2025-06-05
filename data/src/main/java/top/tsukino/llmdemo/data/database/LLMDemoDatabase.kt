@@ -1,14 +1,17 @@
 package top.tsukino.llmdemo.data.database
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import top.tsukino.llmdemo.data.database.dao.CollectionCategoryDao
 import top.tsukino.llmdemo.data.database.dao.CollectionTextDao
 import top.tsukino.llmdemo.data.database.dao.ConversationDao
 import top.tsukino.llmdemo.data.database.dao.MessageDao
 import top.tsukino.llmdemo.data.database.dao.ModelDao
 import top.tsukino.llmdemo.data.database.dao.ProviderDao
 import top.tsukino.llmdemo.data.database.dao.RecordingDao
+import top.tsukino.llmdemo.data.database.entity.CollectionCategoryEntity
 import top.tsukino.llmdemo.data.database.entity.CollectionTextEntity
 import top.tsukino.llmdemo.data.database.entity.ConversationEntity
 import top.tsukino.llmdemo.data.database.entity.MessageEntity
@@ -24,9 +27,10 @@ import top.tsukino.llmdemo.data.database.entity.RecordingEntity
         ModelEntity::class,
         RecordingEntity::class,
         CollectionTextEntity::class,
+        CollectionCategoryEntity::class,
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class LLMDemoDatabase: RoomDatabase() {
@@ -36,4 +40,5 @@ abstract class LLMDemoDatabase: RoomDatabase() {
     abstract fun modelDao(): ModelDao
     abstract fun recordingDao(): RecordingDao
     abstract fun collectionTextDao(): CollectionTextDao
+    abstract fun collectionCategoryDao(): CollectionCategoryDao
 }

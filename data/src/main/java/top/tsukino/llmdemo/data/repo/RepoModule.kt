@@ -4,6 +4,7 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import top.tsukino.llmdemo.data.repo.base.CollectionCategoryRepo
 import top.tsukino.llmdemo.data.repo.base.CollectionTextRepo
 import top.tsukino.llmdemo.data.repo.base.ConversationRepo
 import top.tsukino.llmdemo.data.repo.base.ModelRepo
@@ -43,4 +44,10 @@ abstract class RepoModule {
     abstract fun bindCollectionTextRepo(
         collectionTextRepo: DefaultCollectionTextRepo
     ) : CollectionTextRepo
+
+    @Singleton
+    @Binds
+    abstract fun bindCollectionCategoryRepo(
+        collectionCategoryRepo: DefaultCollectionCategoryRepo
+    ): CollectionCategoryRepo
 }

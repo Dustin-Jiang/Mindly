@@ -47,4 +47,10 @@ class DefaultRecordingRepo @Inject constructor(
     ) {
         return database.recordingDao().updateRecording(recording)
     }
+
+    override fun getRecordingsByCategory(
+        categoryId: Long
+    ): Flow<List<RecordingEntity>> {
+        return database.recordingDao().getRecordingsByCategory(categoryId)
+    }
 }

@@ -11,4 +11,6 @@ interface CollectionTextRepo {
     suspend fun insertCollectionText(collectionText: CollectionTextEntity): Long
     suspend fun deleteCollectionText(collectionText: CollectionTextEntity)
     suspend fun updateCollectionText(collectionText: CollectionTextEntity)
+
+    fun getCollectionTextsByCategory(categoryId: Long): Flow<List<CollectionTextEntity>>
 }

@@ -24,4 +24,7 @@ interface RecordingDao {
 
     @Query("SELECT * FROM recording")
     fun getAllRecordings(): Flow<List<RecordingEntity>>
+
+    @Query("SELECT * FROM recording WHERE category = :categoryId")
+    fun getRecordingsByCategory(categoryId: Long): Flow<List<RecordingEntity>>
 }

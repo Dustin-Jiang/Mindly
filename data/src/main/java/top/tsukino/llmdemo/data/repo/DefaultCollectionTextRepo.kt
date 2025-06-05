@@ -40,4 +40,10 @@ class DefaultCollectionTextRepo @Inject constructor(
     ) {
         return database.collectionTextDao().updateCollectionText(collectionText)
     }
+
+    override fun getCollectionTextsByCategory(
+        categoryId: Long
+    ): Flow<List<CollectionTextEntity>> {
+        return database.collectionTextDao().getCollectionTextsByCategory(categoryId)
+    }
 }

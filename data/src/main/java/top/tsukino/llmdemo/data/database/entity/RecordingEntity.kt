@@ -1,11 +1,21 @@
 package top.tsukino.llmdemo.data.database.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import java.util.Date
 
 @Entity(
-    tableName = "recording"
+    tableName = "recording",
+    foreignKeys = [
+        ForeignKey(
+            entity = CollectionCategoryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["category"],
+            onDelete = ForeignKey.SET_NULL,
+            onUpdate = ForeignKey.CASCADE,
+        )
+    ],
 )
 data class RecordingEntity(
     @PrimaryKey(autoGenerate = true)
@@ -17,4 +27,6 @@ data class RecordingEntity(
     val timestamp: Date,
 
     val transcript: String = "",
+
+    val category: Long? = null,
 )

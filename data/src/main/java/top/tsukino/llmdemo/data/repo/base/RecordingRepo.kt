@@ -11,4 +11,6 @@ interface RecordingRepo {
     suspend fun insertRecording(recording: RecordingEntity): Long
     suspend fun deleteRecording(recording: RecordingEntity)
     suspend fun updateRecording(recording: RecordingEntity)
+
+    fun getRecordingsByCategory(categoryId: Long): Flow<List<RecordingEntity>>
 }

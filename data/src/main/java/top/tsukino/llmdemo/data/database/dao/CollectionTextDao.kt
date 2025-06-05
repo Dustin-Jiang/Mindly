@@ -24,4 +24,7 @@ interface CollectionTextDao {
 
     @Query("SELECT * FROM collection_text")
     fun getAllCollectionTexts(): Flow<List<CollectionTextEntity>>
+
+    @Query("SELECT * FROM collection_text WHERE category = :categoryId")
+    fun getCollectionTextsByCategory(categoryId: Long): Flow<List<CollectionTextEntity>>
 }
