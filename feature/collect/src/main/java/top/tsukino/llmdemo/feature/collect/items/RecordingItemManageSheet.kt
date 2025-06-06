@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DriveFileMove
 import androidx.compose.material.icons.filled.AddComment
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.RecordVoiceOver
@@ -37,6 +38,7 @@ internal fun RecordingItemManageSheet(
 
     onCreateConversation: (Long) -> Unit,
     onShareTranscript: (Long) -> Unit,
+    onSelectCategory: (Long) -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
@@ -76,6 +78,11 @@ internal fun RecordingItemManageSheet(
                 icon = Icons.Filled.Title,
                 disabled = !isSummaryTitleEnabled,
                 onClick = { onSummary(id) }
+            )
+            SheetItem(
+                text = { Text("选择分类") },
+                icon = Icons.AutoMirrored.Filled.DriveFileMove,
+                onClick = { onSelectCategory(id) }
             )
             SheetItem(
                 text = { Text("删除") },

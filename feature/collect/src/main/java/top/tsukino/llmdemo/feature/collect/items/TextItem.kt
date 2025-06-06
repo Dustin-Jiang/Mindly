@@ -30,6 +30,7 @@ import top.tsukino.llmdemo.feature.common.utils.DateTimeUtils
 class TextItem(
     val data: CollectionTextEntity,
     val title: String,
+    override val category: Long? = data.category,
 
     val show: Boolean,
 

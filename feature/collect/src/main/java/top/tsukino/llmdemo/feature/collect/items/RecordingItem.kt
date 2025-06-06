@@ -2,9 +2,7 @@ package top.tsukino.llmdemo.feature.collect.items
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,28 +11,19 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
-import top.tsukino.llmdemo.feature.collect.CollectViewModel
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayer
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerState
-import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerViewModel
 import top.tsukino.llmdemo.feature.common.utils.DateTimeUtils
-import java.util.Date
 
 class RecordingItem(
     val data: RecordingEntity,
     override val id: ItemId,
     override val timestamp: Long = data.timestamp.time,
+    override val category: Long? = data.category,
 
     private val show: Boolean,
 

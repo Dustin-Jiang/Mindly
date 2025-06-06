@@ -8,6 +8,7 @@ plugins {
 
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("androidx.room")
 }
 
 android {
@@ -48,6 +49,9 @@ android {
     kotlinOptions {
         jvmTarget =
             "11"
+    }
+    room {
+        schemaDirectory("$projectDir/schemas")
     }
 }
 

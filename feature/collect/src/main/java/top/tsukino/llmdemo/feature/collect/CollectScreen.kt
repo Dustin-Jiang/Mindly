@@ -2,8 +2,10 @@ package top.tsukino.llmdemo.feature.collect
 
 import android.util.Log
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,12 +20,14 @@ import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.component.TitleBar
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.feature.collect.items.CollectItem
@@ -37,7 +41,8 @@ import top.tsukino.llmdemo.feature.common.component.ResultView
 import top.tsukino.llmdemo.feature.common.component.audioplayer.AudioPlayerViewModel
 
 @OptIn(
-    ExperimentalMaterial3Api::class
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
 )
 @Composable
 fun CollectScreen(
@@ -60,6 +65,8 @@ fun CollectScreen(
     val collectionTextList = vm.collectionTextList.collectAsState()
     val playerState by playerVm.playerState.collectAsState()
     val currentShowing by vm.currentShowing.collectAsState()
+    val categories by vm.collectionCategoryList.collectAsState()
+    val selectedCategory by vm.selectedCategory.collectAsState()
 
     val collectList = remember {
         derivedStateOf {
@@ -112,18 +119,28 @@ fun CollectScreen(
             })
 
             list.sortByDescending { it.timestamp }
-            list
+            if (selectedCategory < 0) list
+            else list.filter { item -> item.category == selectedCategory }
         }
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TitleBar(
-                title = "收藏",
-                navigationIcon = null,
-                scrollBehavior = scrollBehavior
-            )
+            Column {
+                TitleBar(
+                    title = "收藏",
+                    navigationIcon = null,
+                    scrollBehavior = scrollBehavior
+                )
+                CategoryList(
+                    categories = categories,
+                    selected = selectedCategory,
+                    onChange = { id ->
+                        vm.setSelectedCategory(id)
+                    }
+                )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -150,7 +167,12 @@ fun CollectScreen(
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                     ) {
-                        items(items = collectList.value) { item ->
+                        items(
+                            items = collectList.value,
+                            key = { item ->
+                                item.id.id
+                            }
+                        ) { item ->
                             item.Display()
                         }
                     }
@@ -179,8 +201,31 @@ fun CollectScreen(
     val enableTranscript by vm.enableTranscript
     val enableSummaryTitle by vm.enableSummaryTitle
     val activity = LocalActivity.current
+    val showCategorySelectSheet by vm.showCategorySelectSheet.collectAsState()
 
     when {
+        showCategorySelectSheet != null -> {
+            val id =  showCategorySelectSheet
+            collectList.value.find { id == it.id }?.let { item ->
+                ModalBottomSheet(
+                    modifier = Modifier.defaultMinSize(minHeight = 256.dp),
+                    onDismissRequest = { vm.showCategorySelectSheet(null) }
+                ) {
+                    CategorySelectForm(
+                        categories = categories,
+                        selected = item.category,
+                        onSubmit = { id ->
+                            vm.updateItemCategory(item = item, id = id)
+                            vm.showCategorySelectSheet(null)
+                        },
+                        onCreate = { title ->
+                            vm.createCategory(title)
+                        },
+                        onDismiss = { vm.showCategorySelectSheet(null) },
+                    )
+                }
+            }
+        }
         vm.showRecordingManageSheet.collectAsState().value != null -> {
             RecordingItemManageSheet(
                 id = vm.showRecordingManageSheet.collectAsState().value ?: 0L,
@@ -246,7 +291,13 @@ fun CollectScreen(
                         vm.shareText(activity, text)
                         vm.showTextManageSheet(null)
                     }
-                }
+                },
+                onSelectCategory = { id ->
+                    val item = vm.recordingList.value.find { it.id == id }
+                    item?.let {
+                        vm.showCategorySelectSheet(it.toItemId())
+                    }
+                },
             )
         }
         vm.showTextManageSheet.collectAsState().value != null -> {
@@ -301,7 +352,13 @@ fun CollectScreen(
                         vm.shareText(activity, text)
                         vm.showTextManageSheet(null)
                     }
-                }
+                },
+                onSelectCategory = { id ->
+                    val item = vm.collectionTextList.value.find { it.id == id }
+                    item?.let {
+                        vm.showCategorySelectSheet(it.toItemId())
+                    }
+                },
             )
         }
     }

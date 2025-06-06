@@ -3,7 +3,6 @@ package top.tsukino.llmdemo.feature.collect
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.derivedStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -15,21 +14,27 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import top.tsukino.llmdemo.api.LLMDemoApi
 import top.tsukino.llmdemo.config.LLMPreferences
+import top.tsukino.llmdemo.data.database.entity.CollectionCategoryEntity
 import top.tsukino.llmdemo.data.database.entity.CollectionTextEntity
 import top.tsukino.llmdemo.data.database.entity.MessageEntity
 import top.tsukino.llmdemo.data.database.entity.ModelEntity
 import top.tsukino.llmdemo.data.database.entity.ProviderEntity
 import top.tsukino.llmdemo.data.database.entity.RecordingEntity
 import top.tsukino.llmdemo.data.recorder.AudioRecorder
+import top.tsukino.llmdemo.data.repo.base.CollectionCategoryRepo
 import top.tsukino.llmdemo.data.repo.base.CollectionTextRepo
 import top.tsukino.llmdemo.data.repo.base.ConversationRepo
 import top.tsukino.llmdemo.data.repo.base.ModelRepo
 import top.tsukino.llmdemo.data.repo.base.ProviderRepo
 import top.tsukino.llmdemo.data.repo.base.RecordingRepo
+import top.tsukino.llmdemo.feature.collect.items.CollectItem
 import top.tsukino.llmdemo.feature.collect.items.ItemId
+import top.tsukino.llmdemo.feature.collect.items.RecordingItem
+import top.tsukino.llmdemo.feature.collect.items.TextItem
 import top.tsukino.llmdemo.feature.collect.items.toItemId
 import top.tsukino.llmdemo.feature.common.MainController
 import top.tsukino.llmdemo.feature.common.NavDest
+import top.tsukino.llmdemo.feature.common.helper.withScope
 import java.io.File
 import java.util.Date
 import javax.inject.Inject
@@ -42,6 +47,7 @@ class CollectViewModel @Inject constructor(
     private val providerRepo: ProviderRepo,
     private val modelRepo: ModelRepo,
     private val conversationRepo: ConversationRepo,
+    private val collectionCategoryRepo: CollectionCategoryRepo,
     private val api: LLMDemoApi,
     private val preferences: LLMPreferences
 ) : ViewModel() {
@@ -56,6 +62,9 @@ class CollectViewModel @Inject constructor(
 
     private val _currentShowing = MutableStateFlow<ItemId?>(null)
     val currentShowing = _currentShowing.asStateFlow()
+
+    private val _collectionCategoryList = MutableStateFlow<List<CollectionCategoryEntity>>(emptyList())
+    val collectionCategoryList = _collectionCategoryList.asStateFlow()
 
     private val _providerFlow = MutableStateFlow<List<ProviderEntity>>(emptyList())
     private val _modelFlow = MutableStateFlow<List<ModelEntity>>(emptyList())
@@ -108,6 +117,11 @@ class CollectViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             preferences.immediateTranscript.flow.collect { enable ->
                 _immediateTranscript.value = enable
+            }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            collectionCategoryRepo.getCategoryList().collect { categories ->
+                _collectionCategoryList.value = categories
             }
         }
     }
@@ -167,6 +181,22 @@ class CollectViewModel @Inject constructor(
 
     val _showTextManageSheet = MutableStateFlow<Long?>(null)
     val showTextManageSheet = _showTextManageSheet.asStateFlow()
+
+    val _showCategorySelectSheet = MutableStateFlow<ItemId?>(null)
+    val showCategorySelectSheet = _showCategorySelectSheet.asStateFlow()
+
+    internal fun showCategorySelectSheet(id: ItemId?) {
+        _showCategorySelectSheet.value = id
+    }
+
+    internal fun createCategory(
+        name: String,
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val item = CollectionCategoryEntity(name = name)
+            collectionCategoryRepo.insertCategory(item)
+        }
+    }
 
     internal fun showTextManageSheet(id: Long?) {
         _showTextManageSheet.value = id
@@ -324,6 +354,42 @@ class CollectViewModel @Inject constructor(
             )
             conversationRepo.addMessage(message)
             mainController.navigate(NavDest.Chat(newId))
+        }
+    }
+
+    private val _selectedCategory = MutableStateFlow<Long>(-1L)
+    val selectedCategory = _selectedCategory.asStateFlow()
+
+    internal fun setSelectedCategory(
+        id: Long,
+    ) {
+        _selectedCategory.value = id
+    }
+
+    internal fun updateItemCategory(
+        item: CollectItem,
+        id: Long,
+    ) {
+        when {
+            item is RecordingItem -> {
+                val updated = item.data.copy(
+                    category = id
+                )
+                withScope {
+                    recordingRepo.updateRecording(updated)
+                }
+            }
+            item is TextItem -> {
+                val updated = item.data.copy(
+                    category = id
+                )
+                withScope {
+                    collectionTextRepo.updateCollectionText(updated)
+                }
+            }
+            else -> {
+                Log.w("CollectViewModel", "Unsupported item type for category update: ${item::class.java.simpleName}")
+            }
         }
     }
 }

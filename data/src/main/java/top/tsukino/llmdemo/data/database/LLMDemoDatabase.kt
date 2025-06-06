@@ -29,7 +29,10 @@ import top.tsukino.llmdemo.data.database.entity.RecordingEntity
         CollectionTextEntity::class,
         CollectionCategoryEntity::class,
     ],
-    version = 1,
+    version = 2,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ],
     exportSchema = true
 )
 @TypeConverters(Converters::class)
