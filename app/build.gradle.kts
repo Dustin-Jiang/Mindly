@@ -15,7 +15,7 @@ plugins {
 
 android {
     namespace =
-        "top.tsukino.llmdemo"
+        "top.tsukino.mindly"
     compileSdk =
         35
 

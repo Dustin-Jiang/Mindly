@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "top.tsukino.llmdemo.feature.sharereceiver"
+    namespace = "top.tsukino.mindly.feature.sharereceiver"
     compileSdk = 35
 
     defaultConfig {

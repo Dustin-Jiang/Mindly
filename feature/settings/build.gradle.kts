@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "top.tsukino.llmdemo.feature.settings"
+    namespace = "top.tsukino.mindly.feature.settings"
     compileSdk = 35
 
     defaultConfig {

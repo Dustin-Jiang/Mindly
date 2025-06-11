@@ -2,7 +2,19 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="LLMDemo.api" target="21" />
+      <module name="LLMDemo.app" target="21" />
+      <module name="LLMDemo.config" target="21" />
+      <module name="LLMDemo.data" target="21" />
+      <module name="LLMDemo.feature" target="21" />
+      <module name="LLMDemo.feature.chat" target="21" />
+      <module name="LLMDemo.feature.collect" target="21" />
+      <module name="LLMDemo.feature.common" target="21" />
+      <module name="LLMDemo.feature.home" target="21" />
       <module name="LLMDemo.feature.index" target="21" />
+      <module name="LLMDemo.feature.settings" target="21" />
+      <module name="LLMDemo.feature.shareReceiver" target="21" />
+      <module name="LLMDemo.feature.theme" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>

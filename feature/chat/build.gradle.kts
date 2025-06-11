@@ -12,7 +12,7 @@ plugins {
 }
 
 android {
-    namespace = "top.tsukino.llmdemo.feature.chat"
+    namespace = "top.tsukino.mindly.feature.chat"
     compileSdk = 35
 
     defaultConfig {

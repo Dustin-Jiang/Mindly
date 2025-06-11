@@ -29,7 +29,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name =
-    "LLMDemo"
+    "Mindly"
 include(
     ":app"
 )
