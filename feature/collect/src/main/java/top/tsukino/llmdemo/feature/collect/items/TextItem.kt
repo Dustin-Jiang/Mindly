@@ -1,6 +1,8 @@
 package top.tsukino.llmdemo.feature.collect.items
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -44,9 +46,11 @@ class TextItem(
         ExperimentalFoundationApi::class
     )
     @Composable
-    override fun Display() {
+    override fun Display(
+        modifier: Modifier,
+    ) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = onShow,
@@ -71,7 +75,9 @@ class TextItem(
                     )
                 }
 
-                AnimatedVisibility(show) {
+                AnimatedVisibility(
+                    visible = show,
+                ) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth(),

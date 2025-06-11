@@ -173,7 +173,9 @@ fun CollectScreen(
                                 item.id.id
                             }
                         ) { item ->
-                            item.Display()
+                            item.Display(
+                                modifier = Modifier.animateItem()
+                            )
                         }
                     }
                 }

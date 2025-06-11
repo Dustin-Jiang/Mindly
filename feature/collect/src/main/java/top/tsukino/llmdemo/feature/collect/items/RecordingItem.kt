@@ -1,6 +1,8 @@
 package top.tsukino.llmdemo.feature.collect.items
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,9 +44,11 @@ class RecordingItem(
         ExperimentalFoundationApi::class
     )
     @Composable
-    override fun Display() {
+    override fun Display(
+        modifier: Modifier
+    ) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .combinedClickable(
                     onClick = {
@@ -77,7 +81,9 @@ class RecordingItem(
                     )
                 }
 
-                AnimatedVisibility(show) {
+                AnimatedVisibility(
+                    visible = show,
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth(),
