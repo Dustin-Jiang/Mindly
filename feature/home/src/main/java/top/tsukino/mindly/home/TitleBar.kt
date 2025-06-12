@@ -27,26 +27,10 @@ fun TitleBar(
         ),
         title = {
             Text(
-                "LLM Demo",
+                "Mindly",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        },
-        navigationIcon = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Settings,
-                    contentDescription = "Localized description"
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = { /* do something */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = "Localized description"
-                )
-            }
         },
         scrollBehavior = scrollBehavior
     )

@@ -129,7 +129,7 @@ fun CollectScreen(
         topBar = {
             Column {
                 TitleBar(
-                    title = "收藏",
+                    title = "收集",
                     navigationIcon = null,
                     scrollBehavior = scrollBehavior
                 )
