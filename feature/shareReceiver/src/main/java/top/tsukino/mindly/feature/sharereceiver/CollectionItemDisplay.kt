@@ -6,5 +6,7 @@ interface CollectionItemDisplay<T> {
     @Composable
     fun Display(): Unit
 
-    fun toEntity() : T
+    fun toEntity(
+        category: Long?
+    ) : T
 }

@@ -32,7 +32,7 @@ class TextContents(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
@@ -40,43 +40,39 @@ class TextContents(
                     .fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(4.dp)
             ) {
-                Column(
+                Markdown(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
                             vertical = 8.dp,
                             horizontal = 16.dp
                         ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Markdown(
-                        content = text,
-                        colors = markdownColor(
-                            text = MaterialTheme.colorScheme.onSurface
+                    content = text,
+                    colors = markdownColor(
+                        text = MaterialTheme.colorScheme.onSurface
+                    ),
+                    typography = markdownTypography(
+                        h1 = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold
                         ),
-                        typography = markdownTypography(
-                            h1 = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            h2 = MaterialTheme.typography.headlineSmall,
-                            h3 = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            h4 = MaterialTheme.typography.titleLarge,
-                            h5 = MaterialTheme.typography.titleMedium,
-                            h6 = MaterialTheme.typography.titleSmall.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
+                        h2 = MaterialTheme.typography.headlineSmall,
+                        h3 = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
                         ),
-                        extendedSpans = markdownExtendedSpans {
-                            remember {
-                                ExtendedSpans(
-                                    RoundedCornerSpanPainter(),
-                                )
-                            }
+                        h4 = MaterialTheme.typography.titleLarge,
+                        h5 = MaterialTheme.typography.titleMedium,
+                        h6 = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                    ),
+                    extendedSpans = markdownExtendedSpans {
+                        remember {
+                            ExtendedSpans(
+                                RoundedCornerSpanPainter(),
+                            )
                         }
-                    )
-                }
+                    }
+                )
             }
             OutlinedTextField(
                 value = title,
@@ -89,12 +85,15 @@ class TextContents(
         }
     }
 
-    override fun toEntity(): CollectionTextEntity {
+    override fun toEntity(
+        category: Long?
+    ): CollectionTextEntity {
         val item = CollectionTextEntity(
             id = 0L,
             content = text,
             title = title,
-            timestamp = Date()
+            timestamp = Date(),
+            category = category
         )
         return item
     }

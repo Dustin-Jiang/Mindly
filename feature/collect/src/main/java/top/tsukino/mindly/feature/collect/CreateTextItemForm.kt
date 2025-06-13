@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import top.tsukino.mindly.data.database.entity.CollectionCategoryEntity
 import top.tsukino.mindly.data.database.entity.CollectionTextEntity
+import top.tsukino.mindly.feature.common.component.CategorySelectForm
 import top.tsukino.mindly.feature.common.component.SheetLabel
 import java.util.Date
 
