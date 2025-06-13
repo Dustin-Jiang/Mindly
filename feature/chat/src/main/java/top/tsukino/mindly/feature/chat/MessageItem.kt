@@ -27,6 +27,7 @@ import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
 import com.mikepenz.markdown.compose.extendedspans.RoundedCornerSpanPainter
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.markdownAnimations
 import com.mikepenz.markdown.model.markdownExtendedSpans
 import top.tsukino.mindly.data.database.entity.MessageEntity
 
@@ -77,7 +78,8 @@ fun MessageItem(
                             RoundedCornerSpanPainter(),
                         )
                     }
-                }
+                },
+                animations = markdownAnimations { this },
             )
         }
 
