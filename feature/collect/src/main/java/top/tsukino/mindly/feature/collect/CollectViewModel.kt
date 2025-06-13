@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import top.tsukino.mindly.config.MindlyPreferences
 import top.tsukino.mindly.data.database.entity.CollectionCategoryEntity
 import top.tsukino.mindly.data.database.entity.CollectionTextEntity
@@ -38,6 +38,8 @@ import top.tsukino.mindly.feature.common.helper.withScope
 import java.io.File
 import java.util.Date
 import javax.inject.Inject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @HiltViewModel
 class CollectViewModel @Inject constructor(
@@ -48,7 +50,7 @@ class CollectViewModel @Inject constructor(
     private val modelRepo: ModelRepo,
     private val conversationRepo: ConversationRepo,
     private val collectionCategoryRepo: CollectionCategoryRepo,
-    private val api: LLMDemoApi,
+    private val api: MindlyApi,
     private val preferences: MindlyPreferences
 ) : ViewModel() {
     val recorder = AudioRecorder(context)
@@ -212,6 +214,23 @@ class CollectViewModel @Inject constructor(
         _showRecordingManageSheet.value = null
     }
 
+    internal fun createTextItem(
+        item: CollectionTextEntity
+    ) {
+        var title = item.title
+        withScope {
+            val id = collectionTextRepo.insertCollectionText(item)
+            if (_enableAutoSummaryTitle.value) {
+                title = handleSummary(content = item.content) ?: item.title
+                val result = item.copy(
+                    id = id,
+                    title = title
+                )
+                collectionTextRepo.updateCollectionText(result)
+            }
+        }
+    }
+
     internal fun deleteTextItem(id: Long) {
         val item = _collectionTextList.value.find { it.id == id }
         item?.let {
@@ -267,15 +286,17 @@ class CollectViewModel @Inject constructor(
                 Log.w("CollectViewModel", "Cannot summarize recording ${recordingItem.path} without transcript")
                 return transcriptRecording(id)
             }
-            handleSummary(
-                content = recordingItem.transcript,
-                onFinish = { summary ->
+            withScope {
+                val summary = handleSummary(
+                    content = recordingItem.transcript,
+                )
+                summary?.let { summary ->
                     Log.d("CollectViewModel", "Summary for ${recordingItem.path}: $summary")
                     recordingRepo.updateRecording(
                         recordingItem.copy(title = summary)
                     )
                 }
-            )
+            }
         }
     }
 
@@ -290,22 +311,21 @@ class CollectViewModel @Inject constructor(
                 Log.w("CollectViewModel", "Cannot summarize ${item.id}")
                 return
             }
-            handleSummary(
-                content = item.content,
-                onFinish = { summary ->
-                    Log.d("CollectViewModel", "Summary for ${item.id}: $summary")
+            withScope {
+                val summary = handleSummary(content = item.content)
+                Log.d("CollectViewModel", "Summary for ${item.id}: $summary")
+                summary?.let { summary ->
                     collectionTextRepo.updateCollectionText(
                         item.copy(title = summary)
                     )
                 }
-            )
+            }
         }
     }
 
-    internal fun handleSummary(
+    internal suspend fun handleSummary(
         content: String,
-        onFinish: suspend (String) -> Unit
-    ) {
+    ): String? {
         val summaryModel = _modelFlow.value.firstOrNull { _summaryModelName.value == it.modelId }
         if (summaryModel == null) {
             Log.w("CollectViewModel", "No model found for summary: ${_summaryModelName.value}")
@@ -313,18 +333,22 @@ class CollectViewModel @Inject constructor(
         }
         val providerName = _providerFlow.value.firstOrNull { it.id == summaryModel.providerId }?.name
         providerName?.let { providerName ->
-            mainController.scope.launch(Dispatchers.IO) {
-                try {
-                    api.getProvider(providerName)?.handleSummary(
-                        model = summaryModel.modelId,
-                        content = content,
-                        onFinish = onFinish,
-                    )
-                } catch (e: Exception) {
-                    Log.e("CollectViewModel", "Error summarizing ${content}", e)
+            try {
+                val result = suspendCoroutine<String> { cont ->
+                    mainController.scope.launch(Dispatchers.IO) {
+                        api.getProvider(providerName)?.handleSummary(
+                            model = summaryModel.modelId,
+                            content = content,
+                            onFinish = { cont.resume(it) },
+                        )
+                    }
                 }
+                return result
+            } catch (e: Exception) {
+                Log.e("CollectViewModel", "Error summarizing ${content}", e)
             }
         }
+        return null
     }
 
     internal fun shareText(

@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class LLMDemoApi() {
+class MindlyApi() {
     private val configs = mutableMapOf<String, OpenAIConfig>()
     private val providers = mutableMapOf<String, ApiProvider>()
 

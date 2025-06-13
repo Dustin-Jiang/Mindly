@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId =
-            "top.tsukino.llmdemo"
+            "top.tsukino.mindly"
         minSdk =
             24
         targetSdk =

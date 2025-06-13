@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import top.tsukino.mindly.config.MindlyPreferences
 import top.tsukino.mindly.data.database.dto.ConversationWithMessages
 import top.tsukino.mindly.data.database.entity.CollectionTextEntity
@@ -34,7 +34,7 @@ class ChatViewModel @Inject constructor(
     private val providerRepo: ProviderRepo,
     private val modelRepo: ModelRepo,
     private val collectionTextRepo: CollectionTextRepo,
-    private val api: LLMDemoApi,
+    private val api: MindlyApi,
     private val preferences: MindlyPreferences,
 ): ViewModel() {
     private val _conversationState = MutableStateFlow<ConversationWithMessages?>(null)

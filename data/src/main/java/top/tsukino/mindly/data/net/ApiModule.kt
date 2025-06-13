@@ -6,19 +6,19 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 internal class ApiModule {
-    private val api = LLMDemoApi()
+    private val api = MindlyApi()
 
     @Provides
     @Singleton
     fun provideApi(
         @ApplicationContext context: Context
-    ): LLMDemoApi {
+    ): MindlyApi {
         return api
     }
 }

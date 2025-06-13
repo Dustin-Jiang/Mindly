@@ -4,7 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.catch
 import top.tsukino.mindly.api.ApiConfig
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import top.tsukino.mindly.data.database.MindlyDatabase
 import top.tsukino.mindly.data.database.entity.ModelEntity
 import top.tsukino.mindly.data.database.entity.ProviderEntity
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class DefaultProviderRepo @Inject constructor(
     private val database: MindlyDatabase,
-    private val api: LLMDemoApi,
+    private val api: MindlyApi,
 ): ProviderRepo {
     override fun getProviders() = database.providerDao().getAllProviders()
     override suspend fun getProvider(id: Long) = database.providerDao().getProviderById(id)

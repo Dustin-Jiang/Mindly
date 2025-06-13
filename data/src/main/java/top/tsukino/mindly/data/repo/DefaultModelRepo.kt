@@ -1,13 +1,13 @@
 package top.tsukino.mindly.data.repo
 
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import top.tsukino.mindly.data.database.MindlyDatabase
 import top.tsukino.mindly.data.database.entity.ModelEntity
 import top.tsukino.mindly.data.repo.base.ModelRepo
 import javax.inject.Inject
 
 class DefaultModelRepo @Inject constructor(
-    private val api: LLMDemoApi,
+    private val api: MindlyApi,
     private val database: MindlyDatabase,
 ): ModelRepo {
     override suspend fun insertModel(model: ModelEntity) = database.modelDao().insertModel(model)

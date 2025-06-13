@@ -7,14 +7,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import top.tsukino.mindly.api.ApiConfig
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import top.tsukino.mindly.data.repo.base.ProviderRepo
 import top.tsukino.mindly.feature.common.helper.withScope
 import javax.inject.Inject
 
 @HiltViewModel
 class MainAppViewModel @Inject constructor(
-    private val api: LLMDemoApi,
+    private val api: MindlyApi,
     private val providerRepo: ProviderRepo
 ) : ViewModel() {
     init {

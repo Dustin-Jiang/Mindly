@@ -2,7 +2,7 @@ package top.tsukino.mindly.data.repo
 
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
-import top.tsukino.mindly.api.LLMDemoApi
+import top.tsukino.mindly.api.MindlyApi
 import top.tsukino.mindly.data.database.MindlyDatabase
 import top.tsukino.mindly.data.database.dto.ConversationWithMessages
 import top.tsukino.mindly.data.database.entity.ConversationEntity
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class DefaultConversationRepo @Inject constructor(
     private val database: MindlyDatabase,
-    private val api: LLMDemoApi
+    private val api: MindlyApi
 ): ConversationRepo {
     override suspend fun getConversation(
         id: Long
