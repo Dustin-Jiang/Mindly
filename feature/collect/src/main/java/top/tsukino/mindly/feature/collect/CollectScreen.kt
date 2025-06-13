@@ -20,10 +20,13 @@ import top.tsukino.mindly.feature.common.MainController
 import top.tsukino.mindly.feature.common.component.TitleBar
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -67,6 +70,8 @@ fun CollectScreen(
     val currentShowing by vm.currentShowing.collectAsState()
     val categories by vm.collectionCategoryList.collectAsState()
     val selectedCategory by vm.selectedCategory.collectAsState()
+
+    val showCreateTextItem = remember { mutableStateOf(false) }
 
     val collectList = remember {
         derivedStateOf {
@@ -130,7 +135,10 @@ fun CollectScreen(
             Column {
                 TitleBar(
                     title = "收集",
-                    navigationIcon = null,
+                    navigationIcon = Icons.Default.Add,
+                    onNavigation = {
+                        showCreateTextItem.value = true
+                    },
                     scrollBehavior = scrollBehavior
                 )
                 CategoryList(
@@ -213,7 +221,7 @@ fun CollectScreen(
                     modifier = Modifier.defaultMinSize(minHeight = 256.dp),
                     onDismissRequest = { vm.showCategorySelectSheet(null) }
                 ) {
-                    CategorySelectForm(
+                    CategorySelectSheet(
                         categories = categories,
                         selected = item.category,
                         onSubmit = { id ->
@@ -227,6 +235,17 @@ fun CollectScreen(
                     )
                 }
             }
+        }
+        showCreateTextItem.value -> {
+            CreateTextItemForm(
+                onDismiss = { showCreateTextItem.value = false },
+                categories = categories,
+                selectedCategory = selectedCategory,
+                onSubmit = { item ->
+                    vm.createTextItem(item)
+                    showCreateTextItem.value = false
+                }
+            )
         }
         vm.showRecordingManageSheet.collectAsState().value != null -> {
             RecordingItemManageSheet(
