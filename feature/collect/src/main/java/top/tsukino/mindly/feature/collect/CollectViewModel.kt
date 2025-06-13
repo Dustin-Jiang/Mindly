@@ -146,7 +146,13 @@ class CollectViewModel @Inject constructor(
     internal fun stopRecording() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val recording = recorder.stop()
+                val result = recorder.stop()
+                val category = selectedCategory.value.run {
+                    if (this < 0L) return@run null else return@run this
+                }
+                val recording = result.copy(
+                    category = category
+                )
                 Log.d("CollectViewModel", "Recording stopped: ${recording.path}")
                 viewModelScope.launch(Dispatchers.IO) {
                     val id = recordingRepo.insertRecording(recording)

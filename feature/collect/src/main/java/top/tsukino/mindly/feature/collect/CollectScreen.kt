@@ -22,6 +22,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -39,6 +42,7 @@ import top.tsukino.mindly.feature.collect.items.toItemId
 import top.tsukino.mindly.feature.collect.items.RecordingItemManageSheet
 import top.tsukino.mindly.feature.collect.items.TextItem
 import top.tsukino.mindly.feature.collect.items.TextItemManageSheet
+import top.tsukino.mindly.feature.common.component.CreateCategoryDialog
 import top.tsukino.mindly.feature.common.component.ResultType
 import top.tsukino.mindly.feature.common.component.ResultView
 import top.tsukino.mindly.feature.common.component.audioplayer.AudioPlayerViewModel
@@ -70,6 +74,7 @@ fun CollectScreen(
     val currentShowing by vm.currentShowing.collectAsState()
     val categories by vm.collectionCategoryList.collectAsState()
     val selectedCategory by vm.selectedCategory.collectAsState()
+    val showCreateCategoryDialog = remember { mutableStateOf(false) }
 
     val showCreateTextItem = remember { mutableStateOf(false) }
 
@@ -138,6 +143,18 @@ fun CollectScreen(
                     navigationIcon = Icons.Default.Add,
                     onNavigation = {
                         showCreateTextItem.value = true
+                    },
+                    actions = @Composable {
+                        IconButton(
+                            onClick = {
+                                showCreateCategoryDialog.value = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CreateNewFolder,
+                                contentDescription = "新建分类"
+                            )
+                        }
                     },
                     scrollBehavior = scrollBehavior
                 )
@@ -380,6 +397,14 @@ fun CollectScreen(
                         vm.showCategorySelectSheet(it.toItemId())
                     }
                 },
+            )
+        }
+        showCreateCategoryDialog.value -> {
+            CreateCategoryDialog(
+                onDismiss = { showCreateCategoryDialog.value = false },
+                onCreate = { title ->
+                    vm.createCategory(name = title)
+                }
             )
         }
     }
