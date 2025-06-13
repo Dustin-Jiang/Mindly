@@ -29,8 +29,9 @@ import top.tsukino.mindly.data.database.entity.RecordingEntity
         CollectionTextEntity::class,
         CollectionCategoryEntity::class,
     ],
-    version = 2,
+    version = 3,
     autoMigrations = [
+        AutoMigration(from = 2, to = 3),
         AutoMigration(from = 1, to = 2)
     ],
     exportSchema = true
