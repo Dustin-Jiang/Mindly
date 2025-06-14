@@ -21,6 +21,11 @@ sealed interface NavDest {
         override val route = config.route
             .replace("{id}", id.toString())
     }
+
+    data object CreateCollectionTextItem : NavDest {
+        override val route = "create_collection_text_item"
+        override val config = NavDestConfig.CreateCollectionTextItem
+    }
 }
 
 fun NavHostController.navigate(dest: NavDest) {

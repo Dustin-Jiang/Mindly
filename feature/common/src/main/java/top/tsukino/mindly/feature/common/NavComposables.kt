@@ -128,3 +128,17 @@ fun NavGraphBuilder.composableChat(
         content(it, id)
     }
 }
+
+fun NavGraphBuilder.composableCreateCollectionTextItem(
+    navAnimation: NavAnimation,
+    navController: NavHostController,
+    content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit
+) {
+    animatedComposable(
+        route = NavDestConfig.CreateCollectionTextItem.route,
+        arguments = NavDestConfig.CreateCollectionTextItem.arguments,
+        navAnimation = navAnimation,
+        navController = navController,
+        content = content
+    )
+}

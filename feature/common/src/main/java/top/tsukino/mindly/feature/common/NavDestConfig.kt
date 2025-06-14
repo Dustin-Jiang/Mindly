@@ -21,4 +21,9 @@ sealed interface NavDestConfig {
             }
         )
     }
+
+    data object CreateCollectionTextItem : NavDestConfig {
+        override val route = "create_collection_text_item"
+        override val arguments = emptyList<NamedNavArgument>()
+    }
 }

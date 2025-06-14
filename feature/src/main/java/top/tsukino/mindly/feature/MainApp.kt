@@ -24,6 +24,8 @@ import top.tsukino.mindly.feature.common.popEnterTransition
 import top.tsukino.mindly.feature.common.popExitTransition
 import top.tsukino.mindly.feature.index.IndexScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import top.tsukino.mindly.feature.collect.CreateTextItemScreen
+import top.tsukino.mindly.feature.common.composableCreateCollectionTextItem
 
 @Composable
 internal fun MainApp() {
@@ -76,6 +78,13 @@ internal fun MainApp() {
             navAnimation = animation
         ) { _, id ->
             ChatScreen(mainController = controller, conversationId = id)
+        }
+
+        composableCreateCollectionTextItem(
+            navController = navController,
+            navAnimation = animation
+        ) {
+            CreateTextItemScreen(mainController = controller)
         }
     }
 }

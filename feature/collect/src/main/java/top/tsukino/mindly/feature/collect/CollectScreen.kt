@@ -42,6 +42,7 @@ import top.tsukino.mindly.feature.collect.items.toItemId
 import top.tsukino.mindly.feature.collect.items.RecordingItemManageSheet
 import top.tsukino.mindly.feature.collect.items.TextItem
 import top.tsukino.mindly.feature.collect.items.TextItemManageSheet
+import top.tsukino.mindly.feature.common.NavDest
 import top.tsukino.mindly.feature.common.component.CreateCategoryDialog
 import top.tsukino.mindly.feature.common.component.ResultType
 import top.tsukino.mindly.feature.common.component.ResultView
@@ -75,8 +76,6 @@ fun CollectScreen(
     val categories by vm.collectionCategoryList.collectAsState()
     val selectedCategory by vm.selectedCategory.collectAsState()
     val showCreateCategoryDialog = remember { mutableStateOf(false) }
-
-    val showCreateTextItem = remember { mutableStateOf(false) }
 
     val collectList = remember {
         derivedStateOf {
@@ -142,7 +141,7 @@ fun CollectScreen(
                     title = "收集",
                     navigationIcon = Icons.Default.Add,
                     onNavigation = {
-                        showCreateTextItem.value = true
+                        mainController.navigate(NavDest.CreateCollectionTextItem)
                     },
                     actions = @Composable {
                         IconButton(
@@ -252,17 +251,6 @@ fun CollectScreen(
                     )
                 }
             }
-        }
-        showCreateTextItem.value -> {
-            CreateTextItemForm(
-                onDismiss = { showCreateTextItem.value = false },
-                categories = categories,
-                selectedCategory = selectedCategory,
-                onSubmit = { item ->
-                    vm.createTextItem(item)
-                    showCreateTextItem.value = false
-                }
-            )
         }
         vm.showRecordingManageSheet.collectAsState().value != null -> {
             RecordingItemManageSheet(
